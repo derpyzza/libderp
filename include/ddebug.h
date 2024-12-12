@@ -44,12 +44,12 @@ typedef enum {
 #define LOG_LEVEL LOG_ERROR
 #endif
 
-#define log_fatal(...)	log_log(LOG_FATAL,__FILE__, __LINE__,__VA_ARGS__)
-#define log_error(...)	log_log(LOG_ERROR,__FILE__, __LINE__, __VA_ARGS__)
-#define log_warn(...)	log_log(LOG_WARN,__FILE__, __LINE__, __VA_ARGS__)
-#define log_info(...)	log_log(LOG_INFO,__FILE__, __LINE__, __VA_ARGS__)
-#define log_debug(...)	log_log(LOG_DEBUG,__FILE__, __LINE__, __VA_ARGS__)
-#define log_todo(...)	log_log(LOG_TODO,__FILE__, __LINE__, __VA_ARGS__)
+#define log_fatal(...) log_log(LOG_FATAL, __FILE__, __LINE__, __VA_ARGS__)
+#define log_error(...) log_log(LOG_ERROR, __FILE__, __LINE__, __VA_ARGS__)
+#define log_warn(...)	 log_log(LOG_WARN , __FILE__, __LINE__, __VA_ARGS__)
+#define log_info(...)	 log_log(LOG_INFO , __FILE__, __LINE__, __VA_ARGS__)
+#define log_debug(...) log_log(LOG_DEBUG, __FILE__, __LINE__, __VA_ARGS__)
+#define log_todo(...)  log_log(LOG_TODO , __FILE__, __LINE__, __VA_ARGS__)
 
 void log_log(LogLevel log_level, const char* file, int line, const char* fmt, ...);
 // void log_init(LogLevel level);

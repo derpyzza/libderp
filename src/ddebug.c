@@ -57,10 +57,10 @@ void log_log( LogLevel log_level, const char* file, int line, const char* fmt, .
 		return;
 	}
 
-	time_t current_time;
-	struct tm * m_time;
-	time(&current_time);
-	m_time = localtime(&current_time);
+	// time_t current_time;
+	// struct tm * m_time;
+	// time(&current_time);
+	// m_time = localtime(&current_time);
 
 	char* string[32000];
 	memset(string, 0, sizeof(string));
@@ -73,10 +73,11 @@ void log_log( LogLevel log_level, const char* file, int line, const char* fmt, .
 	char* out_string[32000];
 	memset(out_string, 0, sizeof(out_string));
 #ifdef LOG_COLORS
-	sprintf((char*)out_string, "%d:%d:%d %s%s \x1b[90m%s:%i%s, %s\n",
-			m_time->tm_hour,
-			m_time->tm_min,
-			m_time->tm_sec,
+	sprintf((char*)out_string, "%s%s \x1b[90m%s:%i%s, %s\n",
+	// sprintf((char*)out_string, "%d:%d:%d %s%s \x1b[90m%s:%i%s, %s\n",
+			// m_time->tm_hour,
+			// m_time->tm_min,
+			// m_time->tm_sec,
 			log_colours[log_level],
 			log_strings[log_level],
 			file,
@@ -84,10 +85,11 @@ void log_log( LogLevel log_level, const char* file, int line, const char* fmt, .
 			RESET, 
 			(char*)string);
 #else
-	sprintf((char*)out_string, "%d:%d:%d [%s] %s:%i, %s\n",
-			m_time->tm_hour,
-			m_time->tm_min,
-			m_time->tm_sec,
+	// sprintf((char*)out_string, "%d:%d:%d [%s] %s:%i, %s\n",
+	sprintf((char*)out_string, "[%s] %s:%i, %s\n",
+			// m_time->tm_hour,
+			// m_time->tm_min,
+			// m_time->tm_sec,
 			log_strings[log_level],
 			file,
 			line, 

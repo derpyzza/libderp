@@ -5,7 +5,7 @@ PROG_NAME = libderp
 
 TEST := test/bin/test
 
-CFLAGS := -Wall -pedantic -g
+CFLAGS := -Wall -pedantic -g -DDEBUG
 
 all: $(OBJ) debug
 
@@ -14,16 +14,13 @@ $(OBJ):
 
 INCLUDE_FILES = -I$(SRC)
 
-SRC_FILES := $(SRC)/matrix.c
-SRC_FILES += $(addprefix $(SRC)/types/matrix_, vec2.c vec3.c vec4.c mat.c)
-OBJ_FILES := $(addprefix $(OBJ)/, $(notdir $(SRC_FILES:.c=.o)))
+SRC_FILES := $(wildcard $(SRC)/**.c) $(wildcard $(SRC)/**/**.c) $(wildcard $(SRC)/**/**/**.c)
+OBJ_FILES := $(patsubst $(SRC)/%.c, $(OBJ)/%.o, $(SRC_FILES))
 
 check: $(PROG_NAME).a
 	make -C test test
 
-debug: CFLAGS += -DMATRIX_DEBUG_FUNCTIONS
-debug: OBJ_FILES += $(OBJ)/matrix_debug.o
-debug: $(OBJ)/matrix_debug.o $(OBJ_FILES)
+debug: CFLAGS += -DDERP_DEBUG
 
 release: CFLAGS += -O2
 release: clean

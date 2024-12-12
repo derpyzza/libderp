@@ -3,52 +3,46 @@
 #include <stdlib.h>
 
 #include "../include/dvec.h"
+#include "../include/ddebug.h"
 
-/**
-	@param init — initial array size
-	@param elem_size — size of one element
-*/
-Vec *new_vec(size init, size elem_size) {
-	Vec *v = (Vec*)malloc(sizeof(Vec));
+dvec *_new_dvec(size init, size elem_size) {
+	dvec *v = (dvec*)malloc(sizeof(dvec));
 	if(v) {
-		v->max = init;
+		v->cap = init;
 		v->current = 0;
-		v->data = (void**)calloc(v->max, sizeof(elem_size));
+		v->data = calloc(v->cap, sizeof(elem_size));
 		return v;
 	}
 
 	else printf("Error: Not enough memory to create new vec\n"), exit(-1);
 }
 
-/** 
-	@param data — Initial data to start out with
-	@param len — length of array
-*/
-Vec *init_vec(void** data, size len) {
-	Vec *v = new_vec(len, sizeof(void*));
-	memcpy(data, v->data, len);
-	return v;
+dvec *_init_dvec(void** data, size len, size elem_size) {
+	dvec *v = _new_dvec(len, sizeof(elem_size));
+	memcpy(data, v->data, elem_size * len);
+
+	if (v) {
+		return v;	
+	} else {
+		log_error("Couldn't create new vec, copy fail");
+		return NULL;
+	}
 }
 
-void vec_push(Vec *v, void* item) {
-	if (v->current + 1 > v->max) {
-		v->max *= 2;
-		v->data = (void**)realloc(v->data, sizeof(void*) * v->max);
+void dvec_push(dvec *v, void* item) {
+	if (v->current + 1 > v->cap) {
+		v->cap *= 2;
+		v->data = realloc(v->data, sizeof(v->elem_size) * v->cap);
 	}
 
 	v->data[v->current] = item;
 	v->current++;
 }
 
-void vec_pushi(Vec *v, int i) {
-	vec_push(v, (void *)(size)i);
-}
-
-void _vec_pop(Vec *v){
+void* dvec_pop(dvec *v) {
 	if (v->current == 0) {
-		return;
+		return 0;
 	}
 
-	v->data[--v->current] = NULL;
-	return;
+	return v->data[--v->current];
 }
