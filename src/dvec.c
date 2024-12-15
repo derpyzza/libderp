@@ -24,7 +24,7 @@ dvec *_init_dvec(void** data, size len, size elem_size) {
 	if (v) {
 		return v;	
 	} else {
-		log_error("Couldn't create new vec, copy fail");
+		dlog_error("Couldn't create new vec, copy fail");
 		return NULL;
 	}
 }

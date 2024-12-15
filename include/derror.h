@@ -10,9 +10,9 @@ typedef enum derr {
 
 static inline void derror(derr type) {
   switch (type) {
-    case D_MEM_NEG_ALLOC: log_error("Tried allocating with a negative index"); break;
-    case D_MEM_OUT_OF_MEMORY: log_error("Out of Memory, couldn't allocate more"); break;
-    case D_FILE_READ_ERROR: log_error("Couldn't read file");
+    case D_MEM_NEG_ALLOC: dlog_error("Tried allocating with a negative index"); break;
+    case D_MEM_OUT_OF_MEMORY: dlog_error("Out of Memory, couldn't allocate more"); break;
+    case D_FILE_READ_ERROR: dlog_error("Couldn't read file");
     default: break;
   }
 }

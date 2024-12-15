@@ -20,7 +20,7 @@ result read_file(char* path) {
 
 	FILE *in = fopen(path, "rb");
 	if (in == NULL) {
-		log_error("could not read file \"%s\"\n", path);
+		dlog_error("could not read file \"%s\"\n", path);
 		res.err = D_FILE_READ_ERROR;
 		return res;
 	}
@@ -39,7 +39,7 @@ result read_file(char* path) {
 
 	size bufsread = fread(out->data.cptr, 1, out->data.len, in);
 	if ( bufsread < out->data.len ) {
-		log_error("could not read enough bytes from file %s\n", path);
+		dlog_error("could not read enough bytes from file %s\n", path);
 		fclose(in);
 		return res;
 	}
@@ -65,7 +65,7 @@ PathInfo split_path(char* raw_path) {
 	char* ext = (char*)dalloc((len - id) * sizeof(char) + 1).ok;
 
 	if(ext != NULL) strcpy(ext, c);
-	else log_error("could not malloc file ext\n");
+	else dlog_error("could not malloc file ext\n");
 	return (PathInfo){ 
 		.full_path = raw_path,
 		.path = name,

@@ -7,14 +7,14 @@
 result dalloc(size datasize) {
   result r = { 0 };
   if (datasize < 0) {
-    log_error("tried allocating a negative sized chunk of memory");
+    dlog_error("tried allocating a negative sized chunk of memory");
     r.err = D_MEM_NEG_ALLOC;
     return r;
   }
 
   void * mem = malloc(datasize);
   if (!mem) {
-    log_error("Couldn't allocate memory :(");
+    dlog_error("Couldn't allocate memory :(");
     r.err = D_MEM_OUT_OF_MEMORY;
     return r;
   } else {
@@ -26,14 +26,14 @@ result dalloc(size datasize) {
 result drealloc(void * ptr, size datasize) {
   result r = { 0 };
   if (datasize < 0) {
-    log_error("tried allocating a negative sized chunk of memory");
+    dlog_error("tried allocating a negative sized chunk of memory");
     r.err = D_MEM_NEG_ALLOC;
     return r;
   }
 
   void * mem = realloc(ptr, datasize);
   if (!mem) {
-    log_error("Couldn't allocate memory :(");
+    dlog_error("Couldn't allocate memory :(");
     r.err = D_MEM_OUT_OF_MEMORY;
     return r;
   } else {
@@ -44,7 +44,7 @@ result drealloc(void * ptr, size datasize) {
 
 void dfree(void * ptr) {
   if (!ptr) {
-    log_warn("Attempted to free a null pointer, please remove that");
+    dlog_warn("Attempted to free a null pointer, please remove that");
     return;
   }
   free(ptr);

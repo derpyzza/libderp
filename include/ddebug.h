@@ -25,33 +25,33 @@ void assert_fail (const char* expr, const char* message, const char* file, int l
 
 
 typedef enum {
-	LOG_FATAL = 0,
-	LOG_ERROR = 1,
-	LOG_WARN = 2,
-	LOG_INFO = 3,
-	LOG_TODO = 4,
-	LOG_DEBUG = 5,
-	LOG_NUMBER
-} LogLevel;
+	DLOG_FATAL = 0,
+	DLOG_ERROR = 1,
+	DLOG_WARN = 2,
+	DLOG_INFO = 3,
+	DLOG_TODO = 4,
+	DLOG_DEBUG = 5,
+	DLOG_NUMBER
+} DLogLevel;
 
 // for now the log levels are just hardcoded into the code.
 // later i plan on making a nicer logging system but this is good enough for now
 //
 // warning: "good enough for now" often translates to "this is a going to be a permanent feature"
 #ifdef DEBUG
-#define LOG_LEVEL LOG_DEBUG
+#define DLOG_LEVEL DLOG_DEBUG
 #else
-#define LOG_LEVEL LOG_ERROR
+#define DLOG_LEVEL DLOG_ERROR
 #endif
 
-#define log_fatal(...) log_log(LOG_FATAL, __FILE__, __LINE__, __VA_ARGS__)
-#define log_error(...) log_log(LOG_ERROR, __FILE__, __LINE__, __VA_ARGS__)
-#define log_warn(...)	 log_log(LOG_WARN , __FILE__, __LINE__, __VA_ARGS__)
-#define log_info(...)	 log_log(LOG_INFO , __FILE__, __LINE__, __VA_ARGS__)
-#define log_debug(...) log_log(LOG_DEBUG, __FILE__, __LINE__, __VA_ARGS__)
-#define log_todo(...)  log_log(LOG_TODO , __FILE__, __LINE__, __VA_ARGS__)
+#define dlog_fatal(...) dlog_log(DLOG_FATAL, __FILE__, __LINE__, __VA_ARGS__)
+#define dlog_error(...) dlog_log(DLOG_ERROR, __FILE__, __LINE__, __VA_ARGS__)
+#define dlog_warn(...)	dlog_log(DLOG_WARN , __FILE__, __LINE__, __VA_ARGS__)
+#define dlog_info(...)	dlog_log(DLOG_INFO , __FILE__, __LINE__, __VA_ARGS__)
+#define dlog_debug(...) dlog_log(DLOG_DEBUG, __FILE__, __LINE__, __VA_ARGS__)
+#define dlog_todo(...)  dlog_log(DLOG_TODO , __FILE__, __LINE__, __VA_ARGS__)
 
-void log_log(LogLevel log_level, const char* file, int line, const char* fmt, ...);
+void dlog_log(DLogLevel log_level, const char* file, int line, const char* fmt, ...);
 // void log_init(LogLevel level);
 
 // convenience macro for checking null pointer dereferences
@@ -59,5 +59,5 @@ void log_log(LogLevel log_level, const char* file, int line, const char* fmt, ..
 log_fatal("Null pointer dereference exception"),\
 exit(-1);
 
-#define PANIC(msg) log_fatal(msg), exit(-1);
-#define TODO(ret, msg) { log_debug("TODO: %s", msg); return ret; }
+#define PANIC(msg) dlog_fatal(msg), exit(-1);
+#define TODO(ret, msg) { dlog_debug("TODO: %s", msg); return ret; }

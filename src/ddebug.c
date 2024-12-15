@@ -1,13 +1,13 @@
-#include <time.h>
+// #include <time.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 
 #include "../include/ddebug.h"
 
-#ifdef LOG_COLORS
+#ifdef DLOG_COLORS
 #define RESET "\x1b[0m"
-static const char* log_colours[LOG_NUMBER] = {
+static const char* __dlog_colours[DLOG_NUMBER] = {
 	"\x1b[35m", // FATAL
 	"\x1b[31m", // ERROR
 	"\x1b[32m", // WARN
@@ -18,9 +18,9 @@ static const char* log_colours[LOG_NUMBER] = {
 #endif
 
 void assert_fail (const char* expr, const char* message, const char* file, int line) {
-#ifdef LOG_COLORS
+#ifdef DLOG_COLORS
 	printf("%s[FAIL]:%s %s at (%s:%i) %s\n", 
-		log_colours[1],
+		__dlog_colours[1],
 		RESET,
 		expr,
 		file,
@@ -42,9 +42,9 @@ void assert_fail (const char* expr, const char* message, const char* file, int l
 // Get string version of log level
 // #define log_level_pretty(level) log_strings[level]
 
-void log_log( LogLevel log_level, const char* file, int line, const char* fmt, ...) {
+void dlog_log( DLogLevel log_level, const char* file, int line, const char* fmt, ...) {
 	// string version of log levels
-	const char* log_strings[LOG_NUMBER] = {
+	const char* log_strings[DLOG_NUMBER] = {
 		"FTAL",
 		"ERRO",
 		"WARN",
@@ -53,7 +53,7 @@ void log_log( LogLevel log_level, const char* file, int line, const char* fmt, .
 		"DEBG"
 	};
 
-	if (log_level > LOG_LEVEL) {
+	if (log_level > DLOG_LEVEL) {
 		return;
 	}
 
@@ -72,7 +72,7 @@ void log_log( LogLevel log_level, const char* file, int line, const char* fmt, .
 	
 	char* out_string[32000];
 	memset(out_string, 0, sizeof(out_string));
-#ifdef LOG_COLORS
+#ifdef DLOG_COLORS
 	sprintf((char*)out_string, "%s%s \x1b[90m%s:%i%s, %s\n",
 	// sprintf((char*)out_string, "%d:%d:%d %s%s \x1b[90m%s:%i%s, %s\n",
 			// m_time->tm_hour,
