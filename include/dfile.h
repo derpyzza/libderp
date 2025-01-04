@@ -21,7 +21,7 @@ typedef struct File {
 	};
 } File;
 
-result read_file(char* path);
-result read_file_to_lines(char* path);
+File* read_file(char* path);
+File* read_file_to_lines(char* path);
 void write_file(dstr *data);
 PathInfo split_path(char* path);

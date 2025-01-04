@@ -6,47 +6,42 @@
 #include "../include/ddebug.h"
 #include "../include/derror.h"
 
-result read_file(char* path) {
-	result res = { 0 };
-
-	res = dalloc(sizeof(File));
-	if (res.err) {
-		derror(res.err);
-		return res;
+File* read_file(char* path) {
+	File* out = malloc(sizeof(File));
+	if (!out) {
+		return out;
 	}
-	File *out = (File *)res.ok;
-
+	out->is_valid = false;
 	out->path = split_path(path);
 
 	FILE *in = fopen(path, "rb");
 	if (in == NULL) {
 		dlog_error("could not read file \"%s\"\n", path);
-		res.err = D_FILE_READ_ERROR;
-		return res;
+		return out;
 	}
 	fseek(in, 0, SEEK_END); 
 	out->data.len = ftell(in); 
 	rewind(in); 
 
-	res = dalloc(out->data.len + 1);
-	if (res.err) {
-		derror(res.err);
+	result d = dalloc(out->data.len + 1);
+	if (d.err) {
+		derror(d.err);
 		fclose(in);
-		return res;
+		return out;
 	}
 
-	out->data.cptr = res.ok;
+	out->data.cptr = d.ok;
 
 	size bufsread = fread(out->data.cptr, 1, out->data.len, in);
 	if ( bufsread < out->data.len ) {
 		dlog_error("could not read enough bytes from file %s\n", path);
 		fclose(in);
-		return res;
+		return out;
 	}
 
 	fclose(in);
-	res.ok = out;
-	return res;
+	out->is_valid = true;
+	return out;
 }
 
 // split the file path on the '.' into 'name' and 'ext' strings
@@ -73,15 +68,14 @@ PathInfo split_path(char* raw_path) {
 	};
 }
 
-result read_file_to_lines(char *path) {
-	result res = read_file(path);
-	if (res.err) { 
-		return res;
+File* read_file_to_lines(char *path) {
+	File* f = read_file(path);
+	if (!f->is_valid) { 
+		return f;
 	} else { 
-		File *f = res.ok;
 		f->is_lines = true;
 		f->lines = dstr_split_lines(&f->data);
-		return res;
+		return f;
 	}
 }
 
