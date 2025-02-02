@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "../include/ddebug.h"
+#include "ddebug.h"
 
 #ifdef DLOG_COLORS
 #define RESET "\x1b[0m"

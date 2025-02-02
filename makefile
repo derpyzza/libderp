@@ -12,7 +12,7 @@ all: $(OBJ) debug
 $(OBJ):
 	mkdir -p ./$(OBJ)
 
-INCLUDE_FILES = -I$(SRC)
+INCLUDE_FILES := -I$(SRC) -Iinclude/libderp/
 
 SRC_FILES := $(wildcard $(SRC)/**.c) $(wildcard $(SRC)/**/**.c) $(wildcard $(SRC)/**/**/**.c)
 OBJ_FILES := $(patsubst $(SRC)/%.c, $(OBJ)/%.o, $(SRC_FILES))

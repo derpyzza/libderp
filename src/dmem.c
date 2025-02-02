@@ -1,8 +1,8 @@
 // #include <stdio.h>
 #include <stdlib.h>
-#include "../include/derror.h"
-#include "../include/dmem.h"
-#include "../include/ddebug.h"
+#include "derror.h"
+#include "dmem.h"
+#include "ddebug.h"
 
 result dalloc(size datasize) {
   result r = { 0 };

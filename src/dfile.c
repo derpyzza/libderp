@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "../include/dmem.h"
-#include "../include/dfile.h"
-#include "../include/ddebug.h"
-#include "../include/derror.h"
+#include "dmem.h"
+#include "dfile.h"
+#include "ddebug.h"
+#include "derror.h"
 
 File* read_file(char* path) {
 	File* out = malloc(sizeof(File));
