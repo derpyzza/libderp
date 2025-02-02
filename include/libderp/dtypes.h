@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <stdbool.h>
 
 typedef int8_t       i8;
 typedef int16_t      i16;
@@ -27,9 +28,6 @@ typedef long double  f80; // architecture dependant i believe.
 typedef char* str; // just more convenient to type in some cases, but char * is clearer
 
 typedef u8 b8;
-#ifndef bool
-typedef uint bool;
-#endif
 
 #define true 1
 #define false 0
