@@ -61,7 +61,7 @@ void* dvec_pop(dvec *v);
 		}                                                                  \
 		return v;                                                          \
 	}                                                                    \
-	static inline void dvec_grow_##I (dvec_##I *v, size by){             \
+	static inline void dvec_grow_##I (dvec_##I *v){             \
 		if (v->current + 1 > v->max) {                                     \
 			v->max *= 2;                                                     \
 			v->data = (T*)realloc(v->data, sizeof(T) * v->max);              \

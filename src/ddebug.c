@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "../include/ddebug.h"
+#include "ddebug.h"
 
 #ifdef DLOG_COLORS
 #define RESET "\x1b[0m"
@@ -73,12 +73,12 @@ void dlog_log( DLogLevel log_level, const char* file, int line, const char* fmt,
 	char* out_string[32000];
 	memset(out_string, 0, sizeof(out_string));
 #ifdef DLOG_COLORS
-	sprintf((char*)out_string, "%s%s \x1b[90m%s:%i%s, %s\n",
+	sprintf((char*)out_string, "%s[%s] \x1b[90m%s:%i%s, %s\n",
 	// sprintf((char*)out_string, "%d:%d:%d %s%s \x1b[90m%s:%i%s, %s\n",
 			// m_time->tm_hour,
 			// m_time->tm_min,
 			// m_time->tm_sec,
-			log_colours[log_level],
+			__dlog_colours[log_level],
 			log_strings[log_level],
 			file,
 			line,

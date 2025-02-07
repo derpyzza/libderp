@@ -12,7 +12,7 @@ all: $(OBJ) debug
 $(OBJ):
 	mkdir -p ./$(OBJ)
 
-INCLUDE_FILES = -I$(SRC)
+INCLUDE_FILES = -I$(SRC) -Iinclude/libderp
 
 SRC_FILES := $(wildcard $(SRC)/**.c) $(wildcard $(SRC)/**/**.c) $(wildcard $(SRC)/**/**/**.c)
 OBJ_FILES := $(patsubst $(SRC)/%.c, $(OBJ)/%.o, $(SRC_FILES))
@@ -20,7 +20,7 @@ OBJ_FILES := $(patsubst $(SRC)/%.c, $(OBJ)/%.o, $(SRC_FILES))
 check: $(PROG_NAME).a
 	make -C test test
 
-debug: CFLAGS += -DDERP_DEBUG
+debug: CFLAGS += -DDERP_DEBUG -DDLOG_COLORS
 
 release: CFLAGS += -O2
 release: clean
