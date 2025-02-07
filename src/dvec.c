@@ -2,8 +2,8 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "../include/dvec.h"
-#include "../include/ddebug.h"
+#include "dvec.h"
+#include "ddebug.h"
 
 dvec *_new_dvec(size init, size elem_size) {
 	dvec *v = (dvec*)malloc(sizeof(dvec));

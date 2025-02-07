@@ -2,10 +2,10 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "../include/dvec.h"
-#include "../include/dstring.h"
-#include "../include/ddebug.h"
-#include "../include/dfile.h"
+#include "dvec.h"
+#include "dstring.h"
+#include "ddebug.h"
+#include "dfile.h"
 
 dstr *dstr_new(size init) {
 	dstr *str = (dstr*)malloc(sizeof(dstr));
