@@ -16,11 +16,3 @@
 #define IN_RANGE_EX(v, min, max)  ((min < v) && (v < max))
 #define MAX(a, b) (a > b ? a : b)
 #define MIN(a, b) (a < b ? a : b)
-
-typedef struct { f32 x, y;       } Vec2;
-typedef struct { f32 x, y, z;    } Vec3;
-typedef struct { f32 x, y, z, w; } Vec4;
-typedef struct { int n; f32 *d;  } VecN; // N-Dimentional Vector
-
-typedef struct { f32 x, y, w, h; } Rect;
-typedef struct { f32 x, y, r;    } Circ;

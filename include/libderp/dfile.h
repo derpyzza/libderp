@@ -25,3 +25,5 @@ File* read_file(char* path);
 File* read_file_to_lines(char* path);
 void write_file(dstr *data);
 PathInfo split_path(char* path);
+// int read_file(char* path, char* buf, int lines);
+// int read_file_lines(char* path, int lines, char* buf, int* line_sizes);

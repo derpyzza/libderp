@@ -10,3 +10,4 @@
 #include "dstring.h"
 #include "dtypes.h"
 #include "dvec.h"
+#include "dcolour.h"
