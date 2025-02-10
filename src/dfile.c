@@ -4,7 +4,6 @@
 #include "dmem.h"
 #include "dfile.h"
 #include "ddebug.h"
-#include "derror.h"
 
 File* read_file(char* path) {
 	File* out = malloc(sizeof(File));
@@ -20,27 +19,27 @@ File* read_file(char* path) {
 		return out;
 	}
 	fseek(in, 0, SEEK_END); 
-	out->data.len = ftell(in); 
+	int len = ftell(in); 
 	rewind(in); 
 
-	result d = dalloc(out->data.len + 1);
-	if (d.err) {
-		derror(d.err);
+	char * d = malloc(len + 1);
+	if (d == NULL) {
 		fclose(in);
 		return out;
 	}
 
-	out->data.cptr = d.ok;
-
-	size bufsread = fread(out->data.cptr, 1, out->data.len, in);
-	if ( bufsread < out->data.len ) {
-		dlog_error("could not read enough bytes from file %s\n", path);
+	size bufsread = fread(d, 1, len, in);
+	// dlog_debug("read enough bytes from file %s, bytes read: %li, bytes needed: %i\n", path, bufsread, len);
+	if ( bufsread < len ) {
+		dlog_error("could not read enough bytes from file %s, bytes read: %i, bytes needed: %i\n", path, bufsread, len);
 		fclose(in);
 		return out;
 	}
 
 	fclose(in);
 	out->is_valid = true;
+	out->data.cptr = d;
+	out->data.len = len;
 	return out;
 }
 

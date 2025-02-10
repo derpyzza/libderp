@@ -1,0 +1,4 @@
+-Wall
+-Wpedantic
+-Iinclude/libderp
+-Isrc

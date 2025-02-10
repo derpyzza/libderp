@@ -39,7 +39,7 @@ typedef struct {
 	size cap;
 } vecstr;
 
-DECL_VEC_TYPE(dstr*, str);
+DECL_VEC_TYPE(dstr*, str)
 
 dvec_str* dstr_split_lines  (dstr *src);
 dvec_str* dstr_split_tokens (dstr *src, const char* tkn);

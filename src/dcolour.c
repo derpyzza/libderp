@@ -1,4 +1,4 @@
-#include "../include/dcolour.h"
+#include "dcolour.h"
 
 drgbf
 drgb_to_drgbf (drgb c) {
