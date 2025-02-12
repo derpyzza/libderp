@@ -1,3 +1,10 @@
+/*
+This software is dual-licensed under the MIT License and The Unlicense.
+You may choose whichever license you prefer.
+
+See LICENSE.MIT and LICENSE.UNLICENSE for details.
+*/
+
 /** @file handy debugging + logging functions */
 #pragma once
 
@@ -13,12 +20,10 @@
 {																															\
 	if (expr) {}																								\
 	else {																											\
-		assertion_function(#expr, msg, __FILE__, __LINE__); 			\
+		assert_fail(#expr, msg, __FILE__, __LINE__);        			\
 	}																														\
 }
-
-void assert_fail (const char* expr, const char* message, const char* file, int line);
-
+  void assert_fail (const char* expr, const char* message, const char* file, int line);
 #else 
   #define ASSERT(expr, msg)
 #endif

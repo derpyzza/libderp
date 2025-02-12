@@ -1,11 +1,16 @@
+/*
+This software is dual-licensed under the MIT License and The Unlicense.
+You may choose whichever license you prefer.
+
+See LICENSE.MIT and LICENSE.UNLICENSE for details.
+*/
 #pragma once
 
-#include "dtypes.h"
+#include "derp.h"
 
 // rgb colours
 typedef struct drgb     drgb;   // 8 bits per colour
 typedef struct drgbf    drgbf;  // normalized colour 0-1
-
 // rgb + alpha colours
 typedef struct drgba    drgba;   // 8 bits per colour
 typedef struct drgbaf   drgbaf;  // normalized colour 0-1

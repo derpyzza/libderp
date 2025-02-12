@@ -1,5 +1,5 @@
 CC=clang
-SRC=src
+SRC=.
 OBJ=obj
 PROG_NAME = libderp
 
@@ -12,7 +12,7 @@ all: $(OBJ) debug
 $(OBJ):
 	mkdir -p ./$(OBJ)
 
-INCLUDE_FILES := -I$(SRC) -Iinclude/libderp/
+INCLUDE_FILES :=
 
 SRC_FILES := $(wildcard $(SRC)/**.c) $(wildcard $(SRC)/**/**.c) $(wildcard $(SRC)/**/**/**.c)
 OBJ_FILES := $(patsubst $(SRC)/%.c, $(OBJ)/%.o, $(SRC_FILES))

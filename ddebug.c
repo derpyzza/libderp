@@ -36,12 +36,6 @@ void assert_fail (const char* expr, const char* message, const char* file, int l
 #endif
 }
 
-// I don't think these will be necessary, but i'll keep them here just in case.
-// Get string version of the Global log level
-// #define G_log_level_pretty log_levels_list[G_log_level]
-// Get string version of log level
-// #define log_level_pretty(level) log_strings[level]
-
 void dlog_log( DLogLevel log_level, const char* file, int line, const char* fmt, ...) {
 	// string version of log levels
 	const char* log_strings[DLOG_NUMBER] = {
@@ -57,11 +51,6 @@ void dlog_log( DLogLevel log_level, const char* file, int line, const char* fmt,
 		return;
 	}
 
-	// time_t current_time;
-	// struct tm * m_time;
-	// time(&current_time);
-	// m_time = localtime(&current_time);
-
 	char* string[32000];
 	memset(string, 0, sizeof(string));
 
@@ -74,10 +63,6 @@ void dlog_log( DLogLevel log_level, const char* file, int line, const char* fmt,
 	memset(out_string, 0, sizeof(out_string));
 #ifdef DLOG_COLORS
 	sprintf((char*)out_string, "%s[%s] \x1b[90m%s:%i%s, %s\n",
-	// sprintf((char*)out_string, "%d:%d:%d %s%s \x1b[90m%s:%i%s, %s\n",
-			// m_time->tm_hour,
-			// m_time->tm_min,
-			// m_time->tm_sec,
 			__dlog_colours[log_level],
 			log_strings[log_level],
 			file,
@@ -85,11 +70,7 @@ void dlog_log( DLogLevel log_level, const char* file, int line, const char* fmt,
 			RESET, 
 			(char*)string);
 #else
-	// sprintf((char*)out_string, "%d:%d:%d [%s] %s:%i, %s\n",
 	sprintf((char*)out_string, "[%s] %s:%i, %s\n",
-			// m_time->tm_hour,
-			// m_time->tm_min,
-			// m_time->tm_sec,
 			log_strings[log_level],
 			file,
 			line, 
