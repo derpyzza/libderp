@@ -8,6 +8,8 @@ See LICENSE.MIT and LICENSE.UNLICENSE for details.
 // General string and buffer management functions
 // includes functionality for strings, dynamic arrays, and file I/O
 #pragma once
+#include <stdlib.h>
+
 #include "derp.h"
 
 // type-unsafe dynamic array
@@ -40,11 +42,51 @@ typedef struct dfilepath {
 #define dbuf_new(type, size) dbuf_make_new(size, sizeof(type))
 #define dbuf_init(type, size, data) _init_dbuf(data, size, sizeof(type))
 
+// T is the base type, I is the name for the outputted datatype ( eg for when you have a char* vec, but you want to call it a string vec )
+#define dbuf_decl(T, N)                                                        \
+  typedef struct dbuf_##N {                                                    \
+    size cap, current;                                                         \
+    T *data;                                                                   \
+  } dbuf_##N;                                                                  \
+                                                                               \
+  static inline dbuf_##N *dbuf_##N_new(size init) {                            \
+    dbuf_##N *v = (dbuf_##N *)malloc(sizeof(dbuf_##N));                        \
+    if (v) {                                                                   \
+      v->cap = init;                                                           \
+      v->current = 0;                                                          \
+      v->data = (T *)calloc(v->cap, sizeof(T));                                \
+      return v;                                                                \
+    }                                                                          \
+    return 0;                                                                  \
+  }                                                                            \
+                                                                               \
+  static inline int dbuf_grow_##N(dbuf_##N *v, size s) {                       \
+    v->cap += s;                                                               \
+    v->data = (T *)realloc(v->data, sizeof(T) * v->cap);                       \
+    if (v->data)                                                               \
+      return 0;                                                                \
+    return -1;                                                                 \
+  }                                                                            \
+                                                                               \
+  static inline void dbuf_push_##I(dbuf_##N *v, T i) {                         \
+    if (v->current + 1 > v->cap) {                                             \
+      v->cap *= 2;                                                             \
+      v->data = (T *)realloc(v->data, sizeof(T) * v->cap);                     \
+    }                                                                          \
+    v->data[v->current] = i;                                                   \
+    v->current++;                                                              \
+  }                                                                            \
+                                                                               \
+  static inline T *vec_pop_##N(dbuf_##N *v) {                                  \
+    return (T *)&v->data[(--v->current)];                                      \
+  }
+
 dbuf *dbuf_make_new(size init, size elem_size);
 dbuf *dbuf_init_new(void* data, size len, size elem_size);
 int dbuf_grow(dbuf* buf, size size);
 int dbuf_push(dbuf *v, void* item);
 void *dbuf_pop(dbuf *v);
+
 
 // === DSTR ===
 
