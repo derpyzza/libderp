@@ -27,6 +27,8 @@ typedef struct dstr {
 	char* cptr;
 } dstr;
 
+#define dstr(l, b) (dstr){.len = l, .cptr = b}
+
 typedef struct dfilepath {
 	char* full_path; 	// the full path, including the extension
 	char* path; 			// the path, excluding the extension
@@ -49,7 +51,7 @@ typedef struct dfilepath {
     T *data;                                                                   \
   } dbuf_##N;                                                                  \
                                                                                \
-  static inline dbuf_##N *dbuf_##N_new(size init) {                            \
+  static inline dbuf_##N *dbuf_new_##N(size init) {                            \
     dbuf_##N *v = (dbuf_##N *)malloc(sizeof(dbuf_##N));                        \
     if (v) {                                                                   \
       v->cap = init;                                                           \
@@ -60,7 +62,7 @@ typedef struct dfilepath {
     return 0;                                                                  \
   }                                                                            \
                                                                                \
-  static inline int dbuf_##N_grow(dbuf_##N *v, size s) {                       \
+  static inline int dbuf_grow_##N(dbuf_##N *v, size s) {                       \
     v->cap += s;                                                               \
     v->data = (T *)realloc(v->data, sizeof(T) * v->cap);                       \
     if (v->data)                                                               \
@@ -68,7 +70,7 @@ typedef struct dfilepath {
     return -1;                                                                 \
   }                                                                            \
                                                                                \
-  static inline void dbuf_##N_push(dbuf_##N *v, T i) {                         \
+  static inline void dbuf_push_##N(dbuf_##N *v, T i) {                         \
     if (v->current + 1 > v->cap) {                                             \
       v->cap *= 2;                                                             \
       v->data = (T *)realloc(v->data, sizeof(T) * v->cap);                     \
