@@ -60,7 +60,7 @@ typedef struct dfilepath {
     return 0;                                                                  \
   }                                                                            \
                                                                                \
-  static inline int dbuf_grow_##N(dbuf_##N *v, size s) {                       \
+  static inline int dbuf_##N_grow(dbuf_##N *v, size s) {                       \
     v->cap += s;                                                               \
     v->data = (T *)realloc(v->data, sizeof(T) * v->cap);                       \
     if (v->data)                                                               \
@@ -68,7 +68,7 @@ typedef struct dfilepath {
     return -1;                                                                 \
   }                                                                            \
                                                                                \
-  static inline void dbuf_push_##I(dbuf_##N *v, T i) {                         \
+  static inline void dbuf_##N_push(dbuf_##N *v, T i) {                         \
     if (v->current + 1 > v->cap) {                                             \
       v->cap *= 2;                                                             \
       v->data = (T *)realloc(v->data, sizeof(T) * v->cap);                     \
