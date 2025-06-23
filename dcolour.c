@@ -1,4 +1,4 @@
-#include "dcolour.h"
+#include "derp.h"
 
 drgbf
 drgb_to_drgbf (drgb c) {
@@ -52,7 +52,7 @@ drgba_from_hex(u32 c){
   n.r = (c >> 24) & 0xFF;
   n.g = (c >> 16) & 0xFF;
   n.b = (c >>  8) & 0xFF;
-  n.b = c & 0xFF;
+  n.a = c & 0xFF;
   return n;
 }
 
@@ -62,7 +62,6 @@ drgbf_from_hex(u32 c) {
   n.r = (float)(((c >> 24) & 0xFF) / 255.0f);
   n.g = (float)(((c >> 16) & 0xFF) / 255.0f);
   n.b = (float)(((c >>  8) & 0xFF) / 255.0f);
-  n.a = (float)((c & 0xFF) / 255.0f);
   return n;
 }
 

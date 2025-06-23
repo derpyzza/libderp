@@ -14,7 +14,7 @@ $(OBJ):
 
 INCLUDE_FILES :=
 
-SRC_FILES := $(wildcard $(SRC)/**.c) $(wildcard $(SRC)/**/**.c) $(wildcard $(SRC)/**/**/**.c)
+SRC_FILES := $(wildcard $(SRC)/**.c)
 OBJ_FILES := $(patsubst $(SRC)/%.c, $(OBJ)/%.o, $(SRC_FILES))
 
 check: $(PROG_NAME).a

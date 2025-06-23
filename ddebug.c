@@ -1,9 +1,8 @@
 // #include <time.h>
+#include "derp.h"
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
-
-#include "ddebug.h"
 
 #ifdef DLOG_COLORS
 #define RESET "\x1b[0m"
@@ -12,26 +11,25 @@ static const char* __dlog_colours[DLOG_NUMBER] = {
 	"\x1b[31m", // ERROR
 	"\x1b[32m", // WARN
 	"\x1b[36m", // INFO
-	"\x1b[34m", // TODO
 	"\x1b[33m", // DEBUG
+	"\x1b[34m", // TODO
 };
 #endif
 
-void assert_fail (const char* expr, const char* message, const char* file, int line) {
+void assert_fail (const char* expr, const char* file, int line) {
 #ifdef DLOG_COLORS
-	printf("%s[FAIL]:%s %s at (%s:%i) %s\n", 
+	printf("%s[ASSERT_FAIL]:%s (%s:%i):\n\texpr: %s\n", 
 		__dlog_colours[1],
 		RESET,
-		expr,
 		file,
 		line,
-		message);
+		expr);
+	__builtin_trap();
 #else
-	printf("[FAIL]: %s at (%s:%i) %s\n", 
+	printf("[FAIL]: %s at (%s:%i)\n", 
 		expr,
 		file,
-		line,
-		message);
+		line );
 
 #endif
 }
