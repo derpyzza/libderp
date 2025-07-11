@@ -76,16 +76,15 @@ static inline void d_free(void * ptr) {
 }
 
 
-
-// virtually expanding memory buffer
-typedef struct d_vmem {
-  u8* buf;  
-  isize allocated,
-        size;
-#if PLATFORM_WINDOWS
-  isize comitted,
-#endif
-} d_vmem;
+// // virtually expanding memory buffer
+// typedef struct d_vmem {
+//   u8* buf;  
+//   isize allocated,
+//         size;
+// #if PLATFORM_WINDOWS
+//   isize comitted,
+// #endif
+// } d_vmem;
 
 // arena allocator
 typedef struct d_arena {
@@ -102,6 +101,8 @@ typedef struct dbuf {
 	   , current     // Current item || length of the array
 	   , elem_size;  // size of one individual element, for alignment purposes
 } dbuf;
+// just to make it nice and apparant what the underlying element type is
+#define dbuf(item) dbuf
 
 // nicer string type
 typedef struct dstr {
@@ -153,14 +154,14 @@ typedef enum {
 void dlog_log(DLogLevel log_level, const char* file, int line, const char* fmt, ...);
 // void log_init(LogLevel level);
 
-void dvmem_init(d_vmem *buf, isize mb_size);
-void * dvmem_alloc(d_vmem *buf, isize len);
-void dvmem_free(d_vmem* buf);
+// void dvmem_init(d_vmem *buf, isize mb_size);
+// void * dvmem_alloc(d_vmem *buf, isize len);
+// void dvmem_free(d_vmem* buf);
 
 // initializes an arena object
 void darena_init (d_arena *buf, isize size);
 // initializes and allocates memory for an arena object
-d_arena *darena_init_alloc (isize size);
+d_arena darena_init_alloc (isize size);
 
 // allocates memory given an arena
 void * darena_alloc (d_arena *buf, isize len);
@@ -180,6 +181,8 @@ void *dbuf_getc(dbuf* v);
 int dbuf_grow(dbuf* buf, isize size);
 int dbuf_push(dbuf *v, void* item);
 void *dbuf_pop(dbuf *v);
+// return a pointer to the element on the given index in the dbuf
+void *dbuf_get(isize index);
 
 
 // === DSTR ===
