@@ -7,15 +7,19 @@
 dbuf dbuf_make_new(isize init, isize elem_size) {
 	dbuf v = {0};
 	v.cap = init;
-	v.current = 0;
+	v.len = 0;
 	v.data = calloc(v.cap, sizeof(elem_size));
 	return v;
-
-	dlog_error("Not enough memory to create new buf");
 }
 
 dbuf dbuf_init_new(void* data, isize len, isize elem_size) {
 	dbuf v = dbuf_make_new(len, sizeof(elem_size));
+
+	if(!data) {
+		dlog_error("Inputted data is NULL, aborting");
+		return v;
+	}
+	
 	memcpy(data, v.data, elem_size * len);
 
 	if (!v.data) {
@@ -24,33 +28,33 @@ dbuf dbuf_init_new(void* data, isize len, isize elem_size) {
 	return v;	
 }
 
-void *dbuf_getc(dbuf* v) {
-	return v->data[v->current];
+void *dbuf_getc(dbuf v) {
+	return v.data[v.len];
 }
 
-int dbuf_push(dbuf *v, void* item) {
-	if (v->current + 1 > v->cap) {
-		if(dbuf_grow(v, v->cap * 2) < 0) return -1;
+int dbuf_push(dbuf v, void* item) {
+	if (v.len + 1 > v.cap) {
+		if(dbuf_grow(v, v.cap * 2) < 0) return -1;
 	}
 
-	v->data[v->current] = item;
-	v->current++;
+	v.data[v.len] = item;
+	v.len++;
 	return 0;
 }
 
-void* dbuf_pop(dbuf *v) {
-	if (v->current == 0) {
+void* dbuf_pop(dbuf v) {
+	if (v.len == 0) {
 		return 0;
 	}
 
-	return v->data[--v->current];
+	return v.data[--v.len];
 }
 
-int dbuf_grow(dbuf* v, isize size) {
-	v->cap += size;
-	void* data = realloc(v->data, sizeof(v->elem_size) * v->cap);
+int dbuf_grow(dbuf v, isize size) {
+	v.cap += size;
+	void* data = realloc(v.data, sizeof(v.elem_size) * v.cap);
 	if(data) {
-		v->data = data;
+		v.data = data;
 		return 0;
 	}
 	return -1;

@@ -95,11 +95,12 @@ typedef struct d_arena {
 } d_arena;
 
 // type-unsafe dynamic array
+// NOTE: it's recommended to use DBUF_DECL to create a new dbuf type instead of using this
 typedef struct dbuf {
 	void** data;     // the data array itself
 	usize cap        // Max allocated size	
-	   , current     // Current item || length of the array
-	   , elem_size;  // size of one individual element, for alignment purposes
+	    , len        // Current item || length of the array
+	    , elem_size; // size of one individual element, for alignment purposes
 } dbuf;
 // just to make it nice and apparant what the underlying element type is
 #define dbuf(item) dbuf
@@ -174,15 +175,18 @@ void darena_free (d_arena* buf);
 */
 #define dbuf_new(type, size) dbuf_make_new(size, sizeof(type))
 #define dbuf_init(type, size, data) _init_dbuf(data, size, sizeof(type))
+
+#define dbuf_get(v, i) v.data[i]
+
 dbuf dbuf_make_new(isize init, isize elem_size);
 dbuf dbuf_init_new(void* data, isize len, isize elem_size);
 // returns pointer to current item in list
-void *dbuf_getc(dbuf* v);
-int dbuf_grow(dbuf* buf, isize size);
-int dbuf_push(dbuf *v, void* item);
-void *dbuf_pop(dbuf *v);
+void *dbuf_getc(dbuf v);
+int dbuf_grow(dbuf buf, isize size);
+int dbuf_push(dbuf v, void* item);
+void *dbuf_pop(dbuf v);
 // return a pointer to the element on the given index in the dbuf
-void *dbuf_get(isize index);
+// void *dbuf_get(isize index);
 
 
 // === DSTR ===
@@ -251,43 +255,59 @@ u8   char_to_digit    (char c);
 bool char_is_alphanum (char c);
 
 
-// T is the base type, I is the name for the outputted datatype ( eg for when you have a char* vec, but you want to call it a string vec )
+// T is the base type, N is the name for the outputted datatype ( eg for when you have a char* vec, but you want to call it a string vec )
 #define dbuf_decl(T, N)                                                        \
   typedef struct dbuf_##N {                                                    \
-    isize cap, current;                                                        \
+    isize cap, len;                                                            \
     T *data;                                                                   \
   } dbuf_##N;                                                                  \
                                                                                \
-  static inline dbuf_##N *dbuf_new_##N(isize init) {                           \
-    dbuf_##N *v = (dbuf_##N *)malloc(sizeof(dbuf_##N));                        \
-    if (v) {                                                                   \
-      v->cap = init;                                                           \
-      v->current = 0;                                                          \
-      v->data = (T *)calloc(v->cap, sizeof(T));                                \
-      return v;                                                                \
-    }                                                                          \
-    return 0;                                                                  \
+  static inline dbuf_##N dbuf_new_##N(isize init) {                            \
+    dbuf_##N v = {0};                                                          \
+                                                                               \
+    v.cap = init;                                                              \
+    v.len = 0;                                                                 \
+    v.data = (T *)calloc(v.cap, sizeof(T));                                    \
+    return v;                                                                  \
   }                                                                            \
                                                                                \
-  static inline int dbuf_grow_##N(dbuf_##N *v, isize s) {                      \
-    v->cap += s;                                                               \
-    v->data = (T *)realloc(v->data, sizeof(T) * v->cap);                       \
-    if (v->data)                                                               \
+  static inline dbuf_##N dbuf_new_from_##N(T *data, isize len) {               \
+    dbuf_##N v = dbuf_new_##N(len);                                            \
+                                                                               \
+    if (!data) {                                                               \
+      dlog_error("Inputted data is NULL, aborting");                           \
+      return v;                                                                \
+    }                                                                          \
+                                                                               \
+    memcpy(data, v.data, sizeof(T) * len);                                     \
+                                                                               \
+    if (!v.data) {                                                             \
+      dlog_error("Couldn't create new vec, copy fail");                        \
+    }                                                                          \
+    return v;                                                                  \
+  }                                                                            \
+                                                                               \
+  static inline int dbuf_grow_##N(dbuf_##N v, isize s) {                       \
+    v.cap += s;                                                                \
+    v.data = (T *)realloc(v.data, sizeof(T) * v.cap);                          \
+    if (v.data) {                                                              \
       return 0;                                                                \
+    }                                                                          \
     return -1;                                                                 \
   }                                                                            \
                                                                                \
-  static inline T dbuf_getc_##N(dbuf_##N *v) { return v->data[v->current]; }   \
+  static inline T dbuf_getc_##N(dbuf_##N v) { return v.data[v.len]; }          \
                                                                                \
-  static inline void dbuf_push_##N(dbuf_##N *v, T i) {                         \
-    if (v->current + 1 > v->cap) {                                             \
-      v->cap *= 2;                                                             \
-      v->data = (T *)realloc(v->data, sizeof(T) * v->cap);                     \
+  static inline void dbuf_push_##N(dbuf_##N v, T i) {                          \
+    if (v.len + 1 > v.cap) {                                                   \
+      v.cap *= 2;                                                              \
+      v.data = (T *)realloc(v.data, sizeof(T) * v.cap);                        \
     }                                                                          \
-    v->data[v->current] = i;                                                   \
-    v->current++;                                                              \
+    v.data[v.len] = i;                                                         \
+    v.len++;                                                                   \
   }                                                                            \
                                                                                \
-  static inline T *vec_pop_##N(dbuf_##N *v) {                                  \
-    return (T *)&v->data[(--v->current)];                                      \
+  static inline T *vec_pop_##N(dbuf_##N v) {                                   \
+    if(v.len == 0) { return NULL; }                                            \
+    return (T *)&v.data[(--v.len)];                                            \
   }

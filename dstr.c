@@ -71,7 +71,7 @@ dbuf dstr_split_tokens (dstr src, const char *tkn) {
 
 	while (tok != NULL) {
 		dstr s = dstr(tok);
-		dbuf_push(&sv, &s);
+		dbuf_push(sv, &s);
 		// else PANIC("Error: Could not create new string");
 
 		tok = strtok(NULL, tkn);
