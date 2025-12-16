@@ -7,12 +7,9 @@
 #ifdef DLOG_COLORS
 #define RESET "\x1b[0m"
 static const char* __dlog_colours[DLOG_NUMBER] = {
-	"\x1b[35m", // FATAL
-	"\x1b[31m", // ERROR
-	"\x1b[32m", // WARN
-	"\x1b[36m", // INFO
-	"\x1b[33m", // DEBUG
-	"\x1b[34m", // TODO
+	#define DLOG(e, s, c) c,
+	DLOG_LEVEL_DATA
+	#undef DLOG
 };
 #endif
 
@@ -37,12 +34,9 @@ void assert_fail (const char* expr, const char* file, int line) {
 void dlog_log( DLogLevel log_level, const char* file, int line, const char* fmt, ...) {
 	// string version of log levels
 	const char* log_strings[DLOG_NUMBER] = {
-		"FTAL",
-		"ERRO",
-		"WARN",
-		"INFO",
-		"TODO",
-		"DEBG"
+		#define DLOG(e, s, c) s,
+		DLOG_LEVEL_DATA
+		#undef DLOG
 	};
 
 	if (log_level > DLOG_LEVEL) {

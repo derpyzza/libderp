@@ -125,13 +125,18 @@ typedef struct drgbf { f32 r, g, b; } drgbf;  // normalized colour 0-1
 typedef struct drgba { u8  r, g, b, a; } drgba;   // 8 bits per colour
 typedef struct drgbaf { f32 r, g, b, a; } drgbaf; // normalized colour 0-1
 
+#define DLOG_LEVEL_DATA \
+  DLOG(FATAL, "FTAL", "\x1b[35m")\
+  DLOG(ERROR, "ERRO", "\x1b[31m")\
+  DLOG(WARN,  "WARN", "\x1b[32m")\
+  DLOG(INFO,  "INFO", "\x1b[36m")\
+  DLOG(DEBUG, "DEBG", "\x1b[33m")\
+  DLOG(TODO,  "TODO", "\x1b[34m")
+
 typedef enum {
-	DLOG_FATAL = 0,
-	DLOG_ERROR,
-	DLOG_WARN,
-	DLOG_INFO,
-	DLOG_DEBUG,
-	DLOG_TODO,
+	#define DLOG(e, s, c) DLOG_##e,
+	DLOG_LEVEL_DATA
+	#undef DLOG
 	DLOG_NUMBER
 } DLogLevel;
 
