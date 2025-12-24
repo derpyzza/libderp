@@ -89,18 +89,18 @@ void dstr_grow(dstr* s, isize len) {
 	s->cptr = (char*)realloc(0, sizeof(char) * s->len);
 }
 
-u8 char_to_digit(char c) {
+u8 d_char_to_digit(char c) {
 	return c - '0';
 }
 
-bool char_is_digit(char c) {
+bool d_char_is_digit(char c) {
 	return (c >= '0' && c <= '9');
 }
 
-bool char_is_alpha(char c) {
+bool d_char_is_alpha(char c) {
 	return ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'));
 }
 
-bool char_is_alphanum(char c) {
-	return char_is_alpha(c) || char_is_digit(c);
+bool d_char_is_alphanum(char c) {
+	return d_char_is_alpha(c) || d_char_is_digit(c);
 }

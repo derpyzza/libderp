@@ -2,21 +2,36 @@
 #include "derp.h"
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+
+static struct dlogger {
+  DLogLevel level;
+  FILE * f_out;
+} def_logger;
 
 #ifdef DLOG_COLORS
 #define RESET "\x1b[0m"
-static const char* __dlog_colours[DLOG_NUMBER] = {
+static const char* dlog_colours[DLOG_NUMBER] = {
 	#define DLOG(e, s, c) c,
 	DLOG_LEVEL_DATA
 	#undef DLOG
 };
 #endif
 
+void dlog_func(DLogLevel log_level, const char* file, int line, const char* fmt, ...);
+
+// string version of log levels
+const char* log_strings[DLOG_NUMBER] = {
+	#define DLOG(e, s, c) s,
+	DLOG_LEVEL_DATA
+	#undef DLOG
+};
+
 void assert_fail (const char* expr, const char* file, int line) {
 #ifdef DLOG_COLORS
 	printf("%s[ASSERT_FAIL]:%s (%s:%i):\n\texpr: %s\n", 
-		__dlog_colours[1],
+		dlog_colours[1],
 		RESET,
 		file,
 		line,
@@ -31,15 +46,13 @@ void assert_fail (const char* expr, const char* file, int line) {
 #endif
 }
 
-void dlog_log( DLogLevel log_level, const char* file, int line, const char* fmt, ...) {
-	// string version of log levels
-	const char* log_strings[DLOG_NUMBER] = {
-		#define DLOG(e, s, c) s,
-		DLOG_LEVEL_DATA
-		#undef DLOG
-	};
+void dlog_init(DLogLevel lvl) {
+	def_logger.level = lvl;
+	def_logger.f_out = stdout;
+}
 
-	if (log_level > DLOG_LEVEL) {
+void dlog_func ( DLogLevel log_level, const char* file, int line, const char* fmt, ...) {
+	if (log_level > def_logger.level) {
 		return;
 	}
 
@@ -55,7 +68,7 @@ void dlog_log( DLogLevel log_level, const char* file, int line, const char* fmt,
 	memset(out_string, 0, sizeof(out_string));
 #ifdef DLOG_COLORS
 	sprintf((char*)out_string, "%s[%s] \x1b[90m%s:%i%s, %s\n",
-			__dlog_colours[log_level],
+			dlog_colours[log_level],
 			log_strings[log_level],
 			file,
 			line,
@@ -69,5 +82,5 @@ void dlog_log( DLogLevel log_level, const char* file, int line, const char* fmt,
 			(char*)string);
 #endif
 
-	printf("%s", (char*)out_string);
+	fprintf(def_logger.f_out, "%s", (char*)out_string);
 }

@@ -57,34 +57,44 @@ typedef long double  f80; // architecture dependant i believe.
 // 
 
 typedef struct d_allocator {
-  void *(*alloc)(isize, void*);
-  void (*free)(void*, void*);
+  void *(*alloc)(isize len, bool clear, void* ctx);
+  void (*free)(void* ptr, isize len, void* ctx);
   void * ctx;
 } d_allocator;
 
-void * default_malloc(isize l, void*);
-void   default_free(void*, void*);
-
 extern d_allocator def_allocator;
 
+// set default allocator for this program
+void dalloc_set_default(d_allocator alloc);
+
 static inline void * d_alloc(isize l) {
-  return def_allocator.alloc(l, def_allocator.ctx);
+  return def_allocator.alloc(l, false, def_allocator.ctx);
 }
 
-static inline void d_free(void * ptr) {
-  def_allocator.free(ptr, def_allocator.ctx);
+static inline void * d_calloc(isize l) {
+  return def_allocator.alloc(l, false, def_allocator.ctx);
 }
 
+static inline void d_free(void * ptr, isize len) {
+  def_allocator.free(ptr, len, def_allocator.ctx);
+}
 
-// // virtually expanding memory buffer
-// typedef struct d_vmem {
-//   u8* buf;  
-//   isize allocated,
-//         size;
-// #if PLATFORM_WINDOWS
-//   isize comitted,
-// #endif
-// } d_vmem;
+void * d_tracking_alloc(isize l, bool clear, void* ctx);
+void d_tracking_free(void* ptr, isize len, void* ctx);
+
+typedef struct dtrack_allocator_data {
+  int num_allocations;
+  isize memory_taken;
+} dtrack_alloc_data;
+
+d_allocator dtracking_allocator = {
+  .alloc = d_tracking_alloc,
+  .free = d_tracking_free,
+};
+
+static inline void dtracking_alloc_init(dtrack_alloc_data * data) {
+  dtracking_allocator.ctx = data;
+}
 
 // arena allocator
 typedef struct d_arena {
@@ -118,20 +128,13 @@ typedef struct dfilepath {
 	dstr ext; 				// the file extension
 } dfilepath;
 
-// rgb colours
-typedef struct drgb  { u8  r, g, b; } drgb;   // 8 bits per colour
-typedef struct drgbf { f32 r, g, b; } drgbf;  // normalized colour 0-1
-// rgb + alpha colours
-typedef struct drgba { u8  r, g, b, a; } drgba;   // 8 bits per colour
-typedef struct drgbaf { f32 r, g, b, a; } drgbaf; // normalized colour 0-1
-
 #define DLOG_LEVEL_DATA \
   DLOG(FATAL, "FTAL", "\x1b[35m")\
   DLOG(ERROR, "ERRO", "\x1b[31m")\
   DLOG(WARN,  "WARN", "\x1b[32m")\
   DLOG(INFO,  "INFO", "\x1b[36m")\
   DLOG(DEBUG, "DEBG", "\x1b[33m")\
-  DLOG(TODO,  "TODO", "\x1b[34m")
+  DLOG(TRACE, "TRAC", "\x1b[34m")
 
 typedef enum {
 	#define DLOG(e, s, c) DLOG_##e,
@@ -140,29 +143,21 @@ typedef enum {
 	DLOG_NUMBER
 } DLogLevel;
 
-// for now the log levels are just hardcoded into the code.
-// later i plan on making a nicer logging system but this is good enough for now
-//
-// warning: "good enough for now" often translates to "this is a going to be a permanent feature"
-#ifdef DEBUG
-#define DLOG_LEVEL DLOG_DEBUG
-#else
-#define DLOG_LEVEL DLOG_ERROR
-#endif
+typedef void (*logFunc)(DLogLevel, const char* file, int line, const char* fmt, ...);
 
-#define dlog_fatal(...) dlog_log(DLOG_FATAL, __FILE__, __LINE__, __VA_ARGS__)
-#define dlog_error(...) dlog_log(DLOG_ERROR, __FILE__, __LINE__, __VA_ARGS__)
-#define dlog_warn(...)	dlog_log(DLOG_WARN , __FILE__, __LINE__, __VA_ARGS__)
-#define dlog_info(...)	dlog_log(DLOG_INFO , __FILE__, __LINE__, __VA_ARGS__)
-#define dlog_debug(...) dlog_log(DLOG_DEBUG, __FILE__, __LINE__, __VA_ARGS__)
-#define dlog_todo(...)  dlog_log(DLOG_TODO , __FILE__, __LINE__, __VA_ARGS__)
+#define dlog_fatal(...) dlog_func(DLOG_FATAL, __FILE__, __LINE__, __VA_ARGS__)
+#define dlog_error(...) dlog_func(DLOG_ERROR, __FILE__, __LINE__, __VA_ARGS__)
+#define dlog_warn(...)	dlog_func(DLOG_WARN , __FILE__, __LINE__, __VA_ARGS__)
+#define dlog_info(...)	dlog_func(DLOG_INFO , __FILE__, __LINE__, __VA_ARGS__)
+#define dlog_debug(...) dlog_func(DLOG_DEBUG, __FILE__, __LINE__, __VA_ARGS__)
+#define dlog_trace(...) dlog_func(DLOG_TRACE, __FILE__, __LINE__, __VA_ARGS__)
 
-void dlog_log(DLogLevel log_level, const char* file, int line, const char* fmt, ...);
-// void log_init(LogLevel level);
-
-// void dvmem_init(d_vmem *buf, isize mb_size);
-// void * dvmem_alloc(d_vmem *buf, isize len);
-// void dvmem_free(d_vmem* buf);
+// initialize logger
+void dlog_init(DLogLevel level);
+// set output stream for the default logger
+void dlog_set_output(FILE * f);
+// logging function
+void dlog_func(DLogLevel log_level, const char* file, int line, const char* fmt, ...);
 
 // initializes an arena object
 void darena_init (d_arena *buf, isize size);
@@ -196,7 +191,8 @@ void *dbuf_pop(dbuf v);
 
 // === DSTR ===
 
-#define dstr(b) (dstr){ b, sizeof(b) }
+#define dstr(b) (dstr){ .cptr = (b), .len = sizeof((b)) - 1 }
+#define dstr_fmt(b) (int)(b).len, (b).cptr
 // create new string, with an initial size of `init`
 dstr dstr_new(isize init);
 // copies string data from 'from' to 'to'
@@ -234,30 +230,13 @@ int dfile_write_lines     (char* file_path, int num_lines, dstr* buf, u64* buf_l
 
 dfilepath split_path(char* path);
 
-// === DCOLOUR ===
-
-drgb  drgbf_to_drgb  (drgbf);
-drgbf drgb_to_drgbf  (drgb);
-drgba drgbf_to_drgba (drgbf);
-drgbf drgba_to_drgbf (drgba);
-
-drgb   drgb_from_hex   (u32 hex);
-drgbf  drgbf_from_hex  (u32 hex);
-drgba  drgba_from_hex  (u32 hex);
-drgbaf drgbaf_from_hex (u32 hex);
-
-u32 drgb_to_hex (drgb);
-u32 drgbf_to_hex (drgbf);
-u32 drgba_to_hex (drgba);
-u32 drgbaf_to_hex (drgbaf);
-
 // === MISC FUNCITONS ===
 
 // ASCII only for now
-bool char_is_digit    (char c);
-bool char_is_alpha    (char c);
-u8   char_to_digit    (char c);
-bool char_is_alphanum (char c);
+bool d_char_is_digit    (char c);
+bool d_char_is_alpha    (char c);
+u8   d_char_to_digit    (char c);
+bool d_char_is_alphanum (char c);
 
 
 // T is the base type, N is the name for the outputted datatype ( eg for when you have a char* vec, but you want to call it a string vec )
