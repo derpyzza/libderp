@@ -56,9 +56,15 @@ typedef long double  f80; // architecture dependant i believe.
 // memory management shenanigans
 // 
 
+typedef struct d_alloc_data {
+  const char* file;
+  int line_num;
+  void* ctx;
+} d_alloc_data;
+
 typedef struct d_allocator {
-  void *(*alloc)(isize len, bool clear, void* ctx);
-  void (*free)(void* ptr, isize len, void* ctx);
+  void *(*alloc)(isize len, bool clear, d_alloc_data data);
+  void (*free)(void* ptr, isize len, d_alloc_data data);
   void * ctx;
 } d_allocator;
 
@@ -67,27 +73,32 @@ extern d_allocator def_allocator;
 // set default allocator for this program
 void dalloc_set_default(d_allocator alloc);
 
-static inline void * d_alloc(isize l) {
-  return def_allocator.alloc(l, false, def_allocator.ctx);
-}
+#define d_alloc(len) def_allocator.alloc(len, false, (d_alloc_data){__FILE__, __LINE__, def_allocator.ctx})
+#define d_calloc(len, elem) def_allocator.alloc(len * elem, true, (d_alloc_data){__FILE__, __LINE__, def_allocator.ctx})
+#define d_free(ptr, len) def_allocator.free(ptr, len, (d_alloc_data){__FILE__, __LINE__, def_allocator.ctx})
 
-static inline void * d_calloc(isize l) {
-  return def_allocator.alloc(l, false, def_allocator.ctx);
-}
+// static inline void * d_alloc(isize l) {
+//   return def_allocator.alloc(l, false, def_allocator.ctx);
+// }
 
-static inline void d_free(void * ptr, isize len) {
-  def_allocator.free(ptr, len, def_allocator.ctx);
-}
+// static inline void * d_calloc(isize num, isize elem_size) {
+//   return def_allocator.alloc(num * elem_size, true, def_allocator.ctx);
+// }
 
-void * d_tracking_alloc(isize l, bool clear, void* ctx);
-void d_tracking_free(void* ptr, isize len, void* ctx);
+// static inline void d_free(void * ptr, isize len) {
+//   def_allocator.free(ptr, len, def_allocator.ctx);
+// }
+
+void * d_tracking_alloc(isize l, bool clear, d_alloc_data data);
+void d_tracking_free(void* ptr, isize len, d_alloc_data data);
 
 typedef struct dtrack_allocator_data {
   int num_allocations;
-  isize memory_taken;
+  isize memory_allocated;
+  isize memory_freed;
 } dtrack_alloc_data;
 
-d_allocator dtracking_allocator = {
+static d_allocator dtracking_allocator = {
   .alloc = d_tracking_alloc,
   .free = d_tracking_free,
 };
@@ -142,6 +153,11 @@ typedef enum {
 	#undef DLOG
 	DLOG_NUMBER
 } DLogLevel;
+
+static struct dlogger {
+  DLogLevel level;
+  FILE * f_out;
+} def_logger;
 
 typedef void (*logFunc)(DLogLevel, const char* file, int line, const char* fmt, ...);
 

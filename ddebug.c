@@ -5,11 +5,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-static struct dlogger {
-  DLogLevel level;
-  FILE * f_out;
-} def_logger;
-
 #ifdef DLOG_COLORS
 #define RESET "\x1b[0m"
 static const char* dlog_colours[DLOG_NUMBER] = {
