@@ -4,7 +4,7 @@
 #include <sys/mman.h>
 
 void * default_malloc(isize l, bool clear, d_alloc_data);
-void   default_free(void*, isize, d_alloc_data);
+void   default_free(void*, d_alloc_data);
 
 d_allocator def_allocator = {
   .alloc = default_malloc,
@@ -26,12 +26,9 @@ void * default_malloc(isize l, bool clear, d_alloc_data data) {
   return ptr;
 }
 
-void default_free(void* ptr, isize len, d_alloc_data data) {
+void default_free(void* ptr, d_alloc_data data) {
   (void)data;
-  (void)len;
-  if(ptr) {
-    free(ptr);
-  }
+  free(ptr);
 }
 
 
@@ -43,20 +40,11 @@ void * d_tracking_alloc(isize l, bool clear, d_alloc_data ctx_data) {
     memset(ptr, 0, l);
   }
   data->num_allocations++;
-  isize prev = data->memory_allocated;
   data->memory_allocated += l;
-    dlog_func(def_logger.level, ctx_data.file, ctx_data.line_num, "[Alloc] made allocation of %zd bytes, prev: %zd, now: %zd", l, prev, data->memory_allocated);
   return ptr;
 }
 
-void d_tracking_free(void* ptr, isize len, d_alloc_data ctx_data) {
-  if(ptr) {
-    dtrack_alloc_data * data = (dtrack_alloc_data*)ctx_data.ctx;
-    isize prev = data->memory_freed;
-    data->memory_freed += len;
-    dlog_func(def_logger.level, ctx_data.file, ctx_data.line_num, "[Alloc] freed %zd bytes, prev: %zd, now: %zd", len, prev, data->memory_allocated);
-    free(ptr);
-  } else {
-    dlog_func(def_logger.level, ctx_data.file, ctx_data.line_num, "tried to free nullptr, size: %zd", len);
-  }
+void d_tracking_free(void* ptr, d_alloc_data ctx_data) {
+  (void) ctx_data;
+  free(ptr);
 }

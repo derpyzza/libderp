@@ -64,7 +64,7 @@ typedef struct d_alloc_data {
 
 typedef struct d_allocator {
   void *(*alloc)(isize len, bool clear, d_alloc_data data);
-  void (*free)(void* ptr, isize len, d_alloc_data data);
+  void (*free)(void* ptr, d_alloc_data data);
   void * ctx;
 } d_allocator;
 
@@ -75,22 +75,10 @@ void dalloc_set_default(d_allocator alloc);
 
 #define d_alloc(len) def_allocator.alloc(len, false, (d_alloc_data){__FILE__, __LINE__, def_allocator.ctx})
 #define d_calloc(len, elem) def_allocator.alloc(len * elem, true, (d_alloc_data){__FILE__, __LINE__, def_allocator.ctx})
-#define d_free(ptr, len) def_allocator.free(ptr, len, (d_alloc_data){__FILE__, __LINE__, def_allocator.ctx})
-
-// static inline void * d_alloc(isize l) {
-//   return def_allocator.alloc(l, false, def_allocator.ctx);
-// }
-
-// static inline void * d_calloc(isize num, isize elem_size) {
-//   return def_allocator.alloc(num * elem_size, true, def_allocator.ctx);
-// }
-
-// static inline void d_free(void * ptr, isize len) {
-//   def_allocator.free(ptr, len, def_allocator.ctx);
-// }
+#define d_free(ptr) def_allocator.free(ptr, (d_alloc_data){__FILE__, __LINE__, def_allocator.ctx})
 
 void * d_tracking_alloc(isize l, bool clear, d_alloc_data data);
-void d_tracking_free(void* ptr, isize len, d_alloc_data data);
+void d_tracking_free(void* ptr, d_alloc_data data);
 
 typedef struct dtrack_allocator_data {
   int num_allocations;
