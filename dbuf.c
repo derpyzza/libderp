@@ -1,153 +1,106 @@
 #include "derp.h"
 
-#include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
 
-dbuf dbuf_make_new(isize init, isize elem_size) {
-	dbuf v = {0};
-	v.cap = init;
-	v.len = 0;
-	v.data = calloc(v.cap, sizeof(elem_size));
-	return v;
+void _dbuf_make (isize size, void** data, isize * len, isize * cur, isize elem_size) {
+	dassert(size > 0, "[dbuf] Cannot make a dbuf of size %zd", size);
+
+	*cur = 0;
+	*len = size;
+	*data = d_calloc(*len, elem_size);
 }
 
-dbuf dbuf_init_new(void* data, isize len, isize elem_size) {
-	dbuf v = dbuf_make_new(len, sizeof(elem_size));
 
-	if(!data) {
-		dlog_error("Inputted data is NULL, aborting");
-		return v;
-	}
-	
-	memcpy(data, v.data, elem_size * len);
+void _dbuf_init ( void ** from, isize size, void ** data, isize * len, isize * cur, isize elem_size) {
+	dassert(size > 0, "[dbuf] Cannot make a dbuf of size %zd", size);
+	dassert(from != NULL, "[dbuf] Cannot copy NULL data");
 
-	if (!v.data) {
-		dlog_error("Couldn't create new vec, copy fail");
-	}
-	return v;	
+	_dbuf_make(size, data, len, cur, elem_size);	
+	// printf("===DATA===[0] = %c\n", *(int*)&data);
+	memcpy(*data, *from, size * elem_size);
+	*cur += size;
 }
 
-void *dbuf_getc(dbuf v) {
-	return v.data[v.len];
+
+void _dbuf_push( void *item, void **data, isize *len, isize *cur, isize elem_size ) {
+	dassert(*cur <= *len
+	  , "[dbuf]: current item must not exceed dbuf length"
+	);
+	dassert(!(*cur > 0 && !*data)
+	  , "[dbuf]: possible memory corruption, data mustn't be null when cur is greater than 0"
+	);
+	dassert(elem_size > 0, "[dbuf] elem_size must not be zero or negative");
+
+	if (*cur >= *len) {
+		int size;
+		if (*len == 0) size = 32;
+		else size = *len * 2;
+		*len = size;
+
+		*data = d_realloc(*data, size * elem_size);
+	}
+
+	char *addr = (char*)(*data) + (*cur * elem_size);
+	memcpy(addr, item, elem_size);
+	(*cur)++;
 }
 
-int dbuf_push(dbuf v, void* item) {
-	if (v.len + 1 > v.cap) {
-		if(dbuf_grow(v, v.cap * 2) < 0) return -1;
-	}
 
-	v.data[v.len] = item;
-	v.len++;
-	return 0;
+void* _dbuf_pop  (void *data, isize *cur, isize elem_size) {
+	dassert(*cur > 0, "[dbuf] Cannot pop off a negative index");
+	dassert(data != NULL, "[dbuf] Data is NULL, possible memory corruption");
+
+	(*cur)--;
+	return (char*)data + (*cur * elem_size);
 }
 
-void* dbuf_pop(dbuf v) {
-	if (v.len == 0) {
-		return 0;
+
+void _dbuf_insert ( void *item, isize index, void **data, isize *len, isize *cur, isize elem_size ) {
+	dassert(index >= 0 && index <= *cur, "[dbuf] Cannot access array out of bounds, index: %zd, dbuf current length: %zd.", index, *cur);
+	dassert(data != NULL, "[dbuf] Data is NULL, possible memory corruption.");
+	dassert(item != NULL, "[dbuf] Cannot insert NULL item into dbuf.");
+
+	if (*cur >= *len) {
+		int size;
+		if (*len == 0) size = 32;
+		else size = *len * 2;
+		*len = size;
+
+		*data = d_realloc(*data, size * elem_size);
 	}
 
-	return v.data[--v.len];
+	if(index < *cur) {
+		memmove(
+		  (char*)(*data) + ((index + 1) * elem_size)
+		  , (char*)(*data) + (index * elem_size)
+		  , (*cur - index) * elem_size
+		);
+	}
+
+	char *addr = (char*)(*data) + (index * elem_size);
+	memcpy(addr, item, elem_size);
+	(*cur)++;
 }
 
-int dbuf_grow(dbuf v, isize size) {
-	v.cap += size;
-	void* data = realloc(v.data, sizeof(v.elem_size) * v.cap);
-	if(data) {
-		v.data = data;
-		return 0;
-	}
-	return -1;
+
+void* _dbuf_get( isize index, void *data, isize *cur, isize elem_size ) {
+	dassert(index >= 0 && index < *cur, "[dbuf] Cannot access array out of bounds, index: %zd, dbuf current length: %zd.", index, *cur);
+	dassert(data != NULL, "[dbuf] Data is NULL, possible memory corruption,");
+
+	return (char*)data + (index * elem_size);
 }
 
-u64 dfile_get_size(char* path) {
-	FILE *in = fopen(path, "rb");
-	if (!in) {
-		dlog_error("could not open file [%s]\n", path);
-		return 0;
-	}
-	fseek(in, 0, SEEK_END); 
-	u64 len = ftell(in); 
-	rewind(in); 
-	fclose(in);
-	return len;
+
+void _dbuf_set ( void * item, isize index, void *data, isize *cur, isize elem_size ) {
+	dassert(index >= 0 && index < *cur, "[dbuf] Cannot access array out of bounds, index: %zd, dbuf current length: %zd.", index, *cur);
+	dassert(data != NULL, "[dbuf] Data is NULL, possible memory corruption.");
+	dassert(item != NULL, "[dbuf] Cannot insert NULL item into dbuf.");
+
+	char *addr = (char*)data + (index * elem_size);
+	memcpy(addr, item, elem_size);
 }
 
-dstr dfile_read(char* path) {
-	FILE *in = fopen(path, "rb");
-	dstr out = dstr("");
-	if (!in) {
-		dlog_error("could not open file [%s], check if it exists?\n", path);
-		return out;
-	}
-	fseek(in, 0, SEEK_END); 
-	out.len = ftell(in); 
-	rewind(in); 
 
-	out.cptr = d_alloc(out.len + 1);
-	if (out.cptr == NULL) {
-		fclose(in);
-		return out;
-	}
-
-	isize bufsread = fread(out.cptr, 1, out.len, in);
-	if ( bufsread < out.len ) {
-		dlog_error("could not read enough bytes from file %s, bytes read: %i, bytes needed: %i\n", path, bufsread, out.len);
-		fclose(in);
-		return out;
-	}
-	fclose(in);
-	return out;
-}
-
-dstr dfile_read_bytes(char* path, u64 bytes) {
-	FILE *in = fopen(path, "rb");
-	dstr out = dstr_new(bytes + 1);
-	if (!in) {
-		dlog_error("could not open file [%s], check if it exists?\n", path);
-		return out;
-	}
-
-	if (out.cptr == NULL) {
-		fclose(in);
-		return out;
-	}
-
-	isize bufsread = fread(out.cptr, 1, out.len, in);
-	if ( bufsread < out.len ) {
-		dlog_error("could not read enough bytes from file %s, bytes read: %i, bytes needed: %i\n", path, bufsread, out.len);
-		fclose(in);
-		return out;
-	}
-	fclose(in);
-	return out;
-}
-
-dbuf dfile_read_lines(char *path) {
-	dstr s = dfile_read(path);
-	return dstr_split_lines(s);
-}
-
-// split the file path on the '.' into 'name' and 'ext' strings
-dfilepath split_path(char* raw_path) {
-	isize len = strlen(raw_path);
-	char* name = (char*) d_alloc(sizeof(char) * len);
-	int id = 0;
-	char* c = raw_path;
-	while(*c != '.') {
-		name[id] = *c;
-		id++;
-		c++;
-	}
-	name[id] = '\0';
-
-	char* ext = (char*)d_alloc((len - id) * sizeof(char) + 1);
-
-	if(ext != NULL) strcpy(ext, c);
-	else dlog_error("could not malloc file ext\n");
-	return (dfilepath){ 
-		.full_path = dstr(raw_path),
-		.path = dstr(name),
-		.ext = dstr(ext)
-	};
+void _dbuf_free ( void **data ) {
+	d_free(data);
 }

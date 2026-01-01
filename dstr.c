@@ -1,7 +1,6 @@
 #include "derp.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 
 dstr dstr_new(isize init) {
@@ -10,7 +9,7 @@ dstr dstr_new(isize init) {
 	str.len = init;
 	str.cptr = d_alloc(sizeof(char) * str.len);
 	if(!str.cptr) {
-		dlog_error("Could not allocate memory for string of size %lli", init);
+		dlog_error("Could not allocate memory for string of size %zd", init);
 	}
 
 	return str;
@@ -61,18 +60,15 @@ dstr dstr_dup (dstr s) {
 }
 
 dbuf dstr_split_tokens (dstr src, const char *tkn) {
-	dbuf sv  = dbuf_new(dstr*, 1);
-		if(!sv.data) {
-			dlog_error("Could not split tokens");
-			return sv;
-		}
+	dbuf sv;
+	dbuf_make(sv, 1);
+
 	dstr dup = dstr_dup(src);
 	char *tok = strtok(dup.cptr, tkn);
 
 	while (tok != NULL) {
 		dstr s = dstr(tok);
-		dbuf_push(sv, &s);
-		// else PANIC("Error: Could not create new string");
+		dbuf_push(sv, s);
 
 		tok = strtok(NULL, tkn);
 	}

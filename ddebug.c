@@ -23,22 +23,34 @@ const char* log_strings[DLOG_NUMBER] = {
 	#undef DLOG
 };
 
-void assert_fail (const char* expr, const char* file, int line) {
-#ifdef DLOG_COLORS
-	printf("%s[ASSERT_FAIL]:%s (%s:%i):\n\texpr: %s\n", 
-		dlog_colours[1],
-		RESET,
-		file,
-		line,
-		expr);
-	__builtin_trap();
-#else
-	printf("[FAIL]: %s at (%s:%i)\n", 
-		expr,
-		file,
-		line );
+void assert_fail (const char* expr, const char* file, int line, const char * fmt, ...) {
 
-#endif
+	char string[1024] = { 0 };
+
+	va_list va;
+	va_start(va, fmt);	
+	vsnprintf((char*)string, 1024, fmt, va);
+	va_end(va);
+	
+#	ifdef DLOG_COLORS
+	printf("%s[ASSERT FAIL]:%s {%s} at (%s:%i)\n        [msg]: %s\n"
+		, dlog_colours[1]
+		, RESET
+		, expr
+		, file
+		, line
+		, (char*) string
+	);
+#	else
+	printf("[ASSERT FAIL]: {%s} at (%s:%i)\n        [msg]: %s\n"
+		, expr
+		, file
+		, line
+		, (char*) string
+	);
+#	endif
+
+	abort();
 }
 
 void dlog_init(DLogLevel lvl) {
@@ -47,6 +59,9 @@ void dlog_init(DLogLevel lvl) {
 }
 
 void dlog_func ( DLogLevel log_level, const char* file, int line, const char* fmt, ...) {
+	dassert(def_logger.level > 0,
+	  "Invalid default logging level set [%i]\n\t     > make sure to run dlog_init() before using the logging functions!", def_logger.level);
+
 	if (log_level > def_logger.level) {
 		return;
 	}
@@ -61,7 +76,7 @@ void dlog_func ( DLogLevel log_level, const char* file, int line, const char* fm
 	
 	char* out_string[32000];
 	memset(out_string, 0, sizeof(out_string));
-#ifdef DLOG_COLORS
+#	ifdef DLOG_COLORS
 	sprintf((char*)out_string, "%s[%s] \x1b[90m%s:%i%s, %s\n",
 			dlog_colours[log_level],
 			log_strings[log_level],
@@ -69,13 +84,13 @@ void dlog_func ( DLogLevel log_level, const char* file, int line, const char* fm
 			line,
 			RESET, 
 			(char*)string);
-#else
+#	else
 	sprintf((char*)out_string, "[%s] %s:%i, %s\n",
 			log_strings[log_level],
 			file,
 			line, 
 			(char*)string);
-#endif
+#	endif
 
 	fprintf(def_logger.f_out, "%s", (char*)out_string);
 }
