@@ -2,105 +2,122 @@
 
 #include <stdlib.h>
 
-void _dbuf_make (isize size, void** data, isize * len, isize * cur, isize elem_size) {
-	dassert(size > 0, "[dbuf] Cannot make a dbuf of size %zd", size);
-
-	*cur = 0;
-	*len = size;
-	*data = d_calloc(*len, elem_size);
+void _dbuf_make ( isize size, dbuf_data data ) {
+	_dbuf_make_alloc ( size, def_allocator, data );
+	dassert(*data.data != NULL, "HUH?");
 }
 
 
-void _dbuf_init ( void ** from, isize size, void ** data, isize * len, isize * cur, isize elem_size) {
+void _dbuf_init ( void **from, isize size, dbuf_data data ) {
+	_dbuf_init_alloc ( from, size, def_allocator, data );
+}
+
+
+void _dbuf_make_alloc ( isize size, d_allocator alloc, dbuf_data data ) {
+	dassert(size > 0, "[dbuf] Cannot make a dbuf of size %zd", size);
+
+	(*data.alloc) = alloc;
+	(*data.cur) = 0;
+	(*data.len) = size;
+	(*data.data) = dalloc_calloc((*data.alloc), (*data.len), data.elem_size);
+	dassert(*data.data != NULL, "????");
+}
+
+
+void _dbuf_init_alloc ( void **from, isize size, d_allocator alloc, dbuf_data data ) {
 	dassert(size > 0, "[dbuf] Cannot make a dbuf of size %zd", size);
 	dassert(from != NULL, "[dbuf] Cannot copy NULL data");
 
-	_dbuf_make(size, data, len, cur, elem_size);	
-	// printf("===DATA===[0] = %c\n", *(int*)&data);
-	memcpy(*data, *from, size * elem_size);
-	*cur += size;
+	_dbuf_make_alloc(size, alloc, data);	
+
+	dassert(*data.data != NULL, "WHA?");
+
+	memcpy( *data.data, *from, size * data.elem_size);
+	(*data.cur) += size;
 }
 
 
-void _dbuf_push( void *item, void **data, isize *len, isize *cur, isize elem_size ) {
-	dassert(*cur <= *len
+void _dbuf_push( void *item, dbuf_data buf ) {
+	dassert( (*buf.cur) <= (*buf.len)
 	  , "[dbuf]: current item must not exceed dbuf length"
 	);
-	dassert(!(*cur > 0 && !*data)
+	dassert(!( (*buf.cur) > 0 && !(*buf.data))
 	  , "[dbuf]: possible memory corruption, data mustn't be null when cur is greater than 0"
 	);
-	dassert(elem_size > 0, "[dbuf] elem_size must not be zero or negative");
+	dassert(buf.elem_size > 0, "[dbuf] elem_size must not be zero or negative");
+	dassert(buf.alloc != NULL, "No allocator provided to dbuf, make sure to set an allocator for your dbuf");
 
-	if (*cur >= *len) {
+	if ( (*buf.cur) >= (*buf.len)) {
 		int size;
-		if (*len == 0) size = 32;
-		else size = *len * 2;
-		*len = size;
+		if ( *buf.len == 0) size = 32;
+		else size = *buf.len * 2;
+		*buf.len = size;
 
-		*data = d_realloc(*data, size * elem_size);
+		*buf.data = dalloc_realloc((*buf.alloc), *buf.data, size * buf.elem_size);
 	}
 
-	char *addr = (char*)(*data) + (*cur * elem_size);
-	memcpy(addr, item, elem_size);
-	(*cur)++;
+	char *addr = (char*)(*buf.data) + ( (*buf.cur) * buf.elem_size);
+	memcpy(addr, item, buf.elem_size);
+	(*buf.cur)++;
 }
 
 
-void* _dbuf_pop  (void *data, isize *cur, isize elem_size) {
-	dassert(*cur > 0, "[dbuf] Cannot pop off a negative index");
-	dassert(data != NULL, "[dbuf] Data is NULL, possible memory corruption");
+void* _dbuf_pop ( dbuf_data data ) {
+	dassert((*data.cur) > 0, "[dbuf] Cannot pop off a negative index");
+	dassert(data.data != NULL, "[dbuf] Data is NULL, possible memory corruption");
 
-	(*cur)--;
-	return (char*)data + (*cur * elem_size);
+	(*data.cur)--;
+	return (char*)(*data.data) + ((*data.cur) * data.elem_size);
 }
 
 
-void _dbuf_insert ( void *item, isize index, void **data, isize *len, isize *cur, isize elem_size ) {
-	dassert(index >= 0 && index <= *cur, "[dbuf] Cannot access array out of bounds, index: %zd, dbuf current length: %zd.", index, *cur);
-	dassert(data != NULL, "[dbuf] Data is NULL, possible memory corruption.");
+void _dbuf_insert ( void *item, isize index, dbuf_data data ) {
+	dassert(index >= 0 && index <= (*data.cur), "[dbuf] Cannot access array out of bounds, index: %zd, dbuf current length: %zd.", index, (*data.cur));
+	dassert((data.data) != NULL, "[dbuf] Data is NULL, possible memory corruption.");
 	dassert(item != NULL, "[dbuf] Cannot insert NULL item into dbuf.");
+	dassert(data.alloc != NULL, "No allocator provided to dbuf, make sure to set an allocator for your dbuf");
 
-	if (*cur >= *len) {
+	if ((*data.cur) >= (*data.len)) {
 		int size;
-		if (*len == 0) size = 32;
-		else size = *len * 2;
-		*len = size;
+		if ((*data.len) == 0) size = 32;
+		else size = (*data.len) * 2;
+		(*data.len) = size;
 
-		*data = d_realloc(*data, size * elem_size);
+		(*data.data) = dalloc_realloc((*data.alloc), (*data.data), size * data.elem_size);
 	}
 
-	if(index < *cur) {
+	if(index < (*data.cur)) {
 		memmove(
-		  (char*)(*data) + ((index + 1) * elem_size)
-		  , (char*)(*data) + (index * elem_size)
-		  , (*cur - index) * elem_size
+		  (char*)(*data.data) + ((index + 1) * data.elem_size)
+		  , (char*)(*data.data) + (index * data.elem_size)
+		  , ((*data.cur) - index) * data.elem_size
 		);
 	}
 
-	char *addr = (char*)(*data) + (index * elem_size);
-	memcpy(addr, item, elem_size);
-	(*cur)++;
+	char *addr = (char*)(*data.data) + (index * data.elem_size);
+	memcpy(addr, item, data.elem_size);
+	(*data.cur)++;
 }
 
 
-void* _dbuf_get( isize index, void *data, isize *cur, isize elem_size ) {
-	dassert(index >= 0 && index < *cur, "[dbuf] Cannot access array out of bounds, index: %zd, dbuf current length: %zd.", index, *cur);
-	dassert(data != NULL, "[dbuf] Data is NULL, possible memory corruption,");
+void* _dbuf_get ( isize index, dbuf_data data ) {
+	dassert(index >= 0 && index < (*data.cur), "[dbuf] Cannot access array out of bounds, index: %zd, dbuf current length: %zd.", index, (*data.cur));
+	dassert(data.data != NULL, "[dbuf] Data is NULL, possible memory corruption,");
 
-	return (char*)data + (index * elem_size);
+	return (char*)(*data.data) + (index * data.elem_size);
 }
 
 
-void _dbuf_set ( void * item, isize index, void *data, isize *cur, isize elem_size ) {
-	dassert(index >= 0 && index < *cur, "[dbuf] Cannot access array out of bounds, index: %zd, dbuf current length: %zd.", index, *cur);
-	dassert(data != NULL, "[dbuf] Data is NULL, possible memory corruption.");
+void  _dbuf_set ( isize index, void *item, dbuf_data data ) {
+	dassert(index >= 0 && index < (*data.cur), "[dbuf] Cannot access array out of bounds, index: %zd, dbuf current length: %zd.", index, (*data.cur));
+	dassert(data.data != NULL, "[dbuf] Data is NULL, possible memory corruption.");
 	dassert(item != NULL, "[dbuf] Cannot insert NULL item into dbuf.");
 
-	char *addr = (char*)data + (index * elem_size);
-	memcpy(addr, item, elem_size);
+	char *addr = (char*)(*data.data) + (index * data.elem_size);
+	memcpy(addr, item, data.elem_size);
 }
 
 
-void _dbuf_free ( void **data ) {
-	d_free(data);
+void _dbuf_free ( dbuf_data data ) {
+	dalloc_free((*data.alloc), *data.data);
 }

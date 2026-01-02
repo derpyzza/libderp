@@ -61,14 +61,14 @@ dstr dstr_dup (dstr s) {
 
 dbuf dstr_split_tokens (dstr src, const char *tkn) {
 	dbuf sv;
-	dbuf_make(sv, 1);
+	dbuf_make(&sv, 1);
 
 	dstr dup = dstr_dup(src);
 	char *tok = strtok(dup.cptr, tkn);
 
 	while (tok != NULL) {
 		dstr s = dstr(tok);
-		dbuf_push(sv, s);
+		dbuf_push(&sv, s);
 
 		tok = strtok(NULL, tkn);
 	}
