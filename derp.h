@@ -27,8 +27,17 @@ typedef float        f32;
 typedef double       f64;
 typedef long double  f80; // architecture dependant i believe.
 
+#if defined(__GNUC__) || defined(__clang__)
+#  define DATTR_UNUSED __attribute__((unused))
+#  define DATTR_FORMAT(F, I) __attribute__((format(printf, F, I)))
+#else
+#  define DATTR_UNUSED
+#  define DATTR_FORMAT(F, I) 
+#endif
+
+
 #define dassert(c, ...) if((c)) {} else { assert_fail( #c, __FILE__, __LINE__, __VA_ARGS__); }
-void assert_fail (const char* expr, const char* file, int line, const char* msg, ...) __attribute__((format(printf, 4, 5)));
+void assert_fail (const char* expr, const char* file, int line, const char* msg, ...) DATTR_FORMAT(4, 5);
 
 
 #define in_range_inc(v, min, max) ((min <= v) && (v <= max))
@@ -66,6 +75,8 @@ void assert_fail (const char* expr, const char* file, int line, const char* msg,
 #define dforeach_id(type, item, index, array, len) \
   int (index) = 0; \
   for ( type * (item) = (array); (item) < (array) + (len); (item)++, (index)++ )
+
+#include "d_buf_macro.h"
 
 // memory management shenanigans
 // 
@@ -201,7 +212,7 @@ void dlog_init(DLogLevel level);
 // set output stream for the default logger
 void dlog_set_output(FILE * f);
 // logging function
-void dlog_func(DLogLevel log_level, const char* file, int line, const char* fmt, ...) __attribute__((format(printf, 4, 5)));
+void dlog_func(DLogLevel log_level, const char* file, int line, const char* fmt, ...)DATTR_FORMAT(4, 5);
 
 // initializes an arena object
 void darena_init (d_arena *buf, isize size);
@@ -221,64 +232,64 @@ typedef struct dbuf_data {
 } dbuf_data;
 
 // === DBUF ===
-#define dbuf_make(vecptr, size)                                                \
+#define dbuf_make(vecptr, type, size)                                          \
   _dbuf_make(size, (dbuf_data){.data = (void **)&(vecptr)->data,               \
                                .len = &(vecptr)->len,                          \
                                .cur = &(vecptr)->cur,                          \
-                               .elem_size = sizeof((*vecptr).data),            \
-                               .alloc = &(vecptr)->alloc})
-#define dbuf_init(vecptr, from, size)                                          \
+                               .elem_size = sizeof(type),                      \
+                               .alloc = (vecptr)->alloc})
+#define dbuf_init(vecptr, type, from, size)                                    \
   _dbuf_init((void **)from, size,                                              \
              (dbuf_data){.data = (void **)&(vecptr)->data,                     \
                          .len = &(vecptr)->len,                                \
                          .cur = &(vecptr)->cur,                                \
-                         .elem_size = sizeof((*vecptr).data),                  \
-                         .alloc = &(vecptr)->alloc})
+                         .elem_size = sizeof(type),                            \
+                         .alloc = (vecptr)->alloc})
 
-#define dbuf_make_alloc(vecptr, _size, _alloc)                                 \
+#define dbuf_make_alloc(vecptr, type, _size, _alloc)                           \
   _dbuf_make(_size, (dbuf_data){.data = (void **)&(vecptr)->data,              \
                                 .len = &(vecptr)->len,                         \
                                 .cur = &(vecptr)->cur,                         \
-                                .elem_size = sizeof((*vecptr).data),           \
+                                .elem_size = sizeof(type),                     \
                                 .alloc = &_alloc})
-#define dbuf_init_alloc(vecptr, _from, _size, _alloc)                          \
+#define dbuf_init_alloc(vecptr, type, _from, _size, _alloc)                    \
   _dbuf_init((void **)_from, _size,                                            \
              (dbuf_data){.data = (void **)&(vecptr)->data,                     \
                          .len = &(vecptr)->len,                                \
                          .cur = &(vecptr)->cur,                                \
-                         .elem_size = sizeof((*vecptr).data),                  \
+                         .elem_size = sizeof(type),                            \
                          .alloc = &_alloc})
-#define dbuf_push(vecptr, item)                                                \
-  _dbuf_push(&item, (dbuf_data){.data = (void **)&(vecptr)->data,              \
-                                .len = &(vecptr)->len,                         \
-                                .cur = &(vecptr)->cur,                         \
-                                .elem_size = sizeof((*vecptr).data),           \
-                                .alloc = &(vecptr)->alloc})
-#define dbuf_pop(vecptr)                                                       \
+#define dbuf_push(vecptr, type, item)                                          \
+  _dbuf_push(&(type){item}, (dbuf_data){.data = (void **)&(vecptr)->data,      \
+                                        .len = &(vecptr)->len,                 \
+                                        .cur = &(vecptr)->cur,                 \
+                                        .elem_size = sizeof(type),             \
+                                        .alloc = &(vecptr)->alloc})
+#define dbuf_pop(vecptr, type)                                                 \
   _dbuf_pop((dbuf_data){.data = (void **)&(vecptr)->data,                      \
                         .len = &(vecptr)->len,                                 \
                         .cur = &(vecptr)->cur,                                 \
-                        .elem_size = sizeof((*vecptr).data),                   \
+                        .elem_size = sizeof(type),                             \
                         .alloc = &(vecptr)->alloc})
-#define dbuf_get(vecptr, id)                                                   \
+#define dbuf_get(vecptr, type, id)                                             \
   _dbuf_get(id, (dbuf_data){.data = (void **)&(vecptr)->data,                  \
                             .len = &(vecptr)->len,                             \
                             .cur = &(vecptr)->cur,                             \
-                            .elem_size = sizeof((*vecptr).data),               \
+                            .elem_size = sizeof(type),                         \
                             .alloc = &(vecptr)->alloc})
-#define dbuf_set(vecptr, id, item)                                             \
+#define dbuf_set(vecptr, type, id, item)                                       \
   _dbuf_set((void *)item, id,                                                  \
             (dbuf_data){.data = (void **)&(vecptr)->data,                      \
                         .len = &(vecptr)->len,                                 \
                         .cur = &(vecptr)->cur,                                 \
-                        .elem_size = sizeof((*vecptr).data),                   \
+                        .elem_size = sizeof(type),                             \
                         .alloc = &(vecptr)->alloc})
-#define dbuf_insert(vecptr, id, item)                                          \
-  _dbuf_insert((void *)item, id,                                               \
+#define dbuf_insert(vecptr, type, id, item)                                    \
+  _dbuf_insert((void *)&(type){item}, id,                                      \
                (dbuf_data){.data = (void **)&(vecptr)->data,                   \
                            .len = &(vecptr)->len,                              \
                            .cur = &(vecptr)->cur,                              \
-                           .elem_size = sizeof((*vecptr).data),                \
+                           .elem_size = sizeof(type),                          \
                            .alloc = &(vecptr)->alloc})
 #define dbuf_free(vecptr) \
   _dbuf_free((dbuf_data){.data = (void**)&(vecptr)->data, .alloc = &(vecptr)->alloc})
@@ -311,6 +322,8 @@ void _dbuf_free ( dbuf_data data );
 
 // === DSTR ===
 
+dbuf_decl(dstr, dstr)
+
 #define dstr(b) (dstr){ .cptr = (b), .len = sizeof((b)) - 1 }
 #define dstr_fmt(b) (int)(b).len, (b).cptr
 // create new string, with an initial size of `init`
@@ -330,9 +343,9 @@ int dstr_append_cstr(dstr *to, const char* from);
 // checks if a given dstr `str` starts with a string `st`
 bool dstr_starts_with(dstr str, const char* st);
 
-dbuf dstr_split_lines   (dstr src);
-dbuf dstr_split_n_lines (dstr src, isize n); // TODO: unimplemented
-dbuf dstr_split_tokens  (dstr src, const char* tkn);
+dbuf_dstr dstr_split_lines   (dstr src);
+dbuf_dstr dstr_split_n_lines (dstr src, isize n); // TODO: unimplemented
+dbuf_dstr dstr_split_tokens  (dstr src, const char* tkn);
 
 int dstr_parse_int(dstr src);   // TODO: Unimplemented
 float dstr_parse_float(dstr src); // TODO: Unimplemented
@@ -343,12 +356,12 @@ u64 dfile_get_size(char* path);
 
 dstr dfile_read           (char* file_path);
 dstr dfile_read_bytes     (char* file_path, u64 bytes);
-dbuf dfile_read_lines     (char* file_path);
-dbuf dfile_read_n_lines   (char* file_path, u64 num_lines); // TODO: Unimplemented
+dbuf_dstr dfile_read_lines     (char* file_path);
+// dbuf_dstr dfile_read_n_lines   (char* file_path, u64 num_lines); // TODO: Unimplemented
 
-int dfile_write           (char* file_path, dstr buf); // TODO: Unimplemented
-int dfile_write_bytes     (char* file_path, dstr buf, isize bytes); // TODO: Unimplemented
-int dfile_write_lines     (char* file_path, int num_lines, dstr* buf, u64* buf_len); // TODO: Unimplemented
+// int dfile_write           (char* file_path, dstr buf); // TODO: Unimplemented
+// int dfile_write_bytes     (char* file_path, dstr buf, isize bytes); // TODO: Unimplemented
+// int dfile_write_lines     (char* file_path, int num_lines, dbuf_dstr buf, u64* buf_len); // TODO: Unimplemented
 
 dfilepath split_path(char* path);
 
@@ -359,68 +372,3 @@ bool d_char_is_digit    (char c);
 bool d_char_is_alpha    (char c);
 u8   d_char_to_digit    (char c);
 bool d_char_is_alphanum (char c);
-
-
-// T is the base type, N is the name for the outputted datatype ( eg for when you have a char* vec, but you want to call it a string vec )
-#define dbuf_decl(T, N)                                                        \
-  typedef struct dbuf_##N {                                                    \
-    isize cur, len;                                                            \
-    T *data;                                                                   \
-    d_allocator alloc;                                                         \
-  } dbuf_##N;                                                                  \
-                                                                               \
-  static __attribute__((unused)) inline dbuf_##N dbuf_new_##N(isize init) {    \
-    dbuf_##N v = {0};                                                          \
-                                                                               \
-    v.len = init;                                                              \
-    v.cur = 0;                                                                 \
-    v.data = (T *)calloc(v.len, sizeof(T));                                    \
-    return v;                                                                  \
-  }                                                                            \
-                                                                               \
-  static __attribute__((unused)) inline dbuf_##N dbuf_new_from_##N(            \
-      T *data, isize len) {                                                    \
-    dbuf_##N v = dbuf_new_##N(len);                                            \
-                                                                               \
-    if (!data) {                                                               \
-      dlog_error("Inputted data is NULL, aborting");                           \
-      return v;                                                                \
-    }                                                                          \
-                                                                               \
-    memcpy(data, v.data, sizeof(T) * len);                                     \
-                                                                               \
-    if (!v.data) {                                                             \
-      dlog_error("Couldn't create new vec, copy fail");                        \
-    }                                                                          \
-    return v;                                                                  \
-  }                                                                            \
-                                                                               \
-  static __attribute__((unused)) inline int dbuf_grow_##N(dbuf_##N v,          \
-                                                          isize s) {           \
-    v.len += s;                                                                \
-    v.data = (T *)realloc(v.data, sizeof(T) * v.len);                          \
-    if (v.data) {                                                              \
-      return 0;                                                                \
-    }                                                                          \
-    return -1;                                                                 \
-  }                                                                            \
-                                                                               \
-  static __attribute__((unused)) inline T dbuf_getc_##N(dbuf_##N v) {          \
-    return v.data[v.cur];                                                      \
-  }                                                                            \
-                                                                               \
-  static __attribute__((unused)) inline void dbuf_push_##N(dbuf_##N v, T i) {  \
-    if (v.cur + 1 > v.len) {                                                   \
-      v.len *= 2;                                                              \
-      v.data = (T *)realloc(v.data, sizeof(T) * v.len);                        \
-    }                                                                          \
-    v.data[v.cur] = i;                                                         \
-    v.cur++;                                                                   \
-  }                                                                            \
-                                                                               \
-  static __attribute__((unused)) inline T *vec_pop_##N(dbuf_##N v) {           \
-    if (v.cur == 0) {                                                          \
-      return NULL;                                                             \
-    }                                                                          \
-    return (T *)&v.data[(--v.cur)];                                            \
-  }

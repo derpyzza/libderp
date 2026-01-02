@@ -60,9 +60,11 @@ dstr dfile_read_bytes(char* path, u64 bytes) {
 	return out;
 }
 
-dbuf dfile_read_lines(char *path) {
+dbuf_dstr dfile_read_lines(char *path) {
 	dstr s = dfile_read(path);
-	return dstr_split_lines(s);
+	dbuf_dstr out = dstr_split_lines(s);
+	d_free(s.cptr);
+	return out;
 }
 
 // split the file path on the '.' into 'name' and 'ext' strings

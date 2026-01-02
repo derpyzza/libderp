@@ -55,28 +55,31 @@ void dstr_copy(dstr* to, dstr* from) {
 }
 
 dstr dstr_dup (dstr s) {
-  const char * str = strdup(s.cptr);
-	return dstr((char *)str);
+	dstr out;
+	out.len = s.len;
+	out.cptr = d_alloc(out.len);
+	memcpy(out.cptr, s.cptr, out.len);
+	return out;
 }
 
-dbuf dstr_split_tokens (dstr src, const char *tkn) {
-	dbuf sv;
-	dbuf_make(&sv, 1);
+dbuf_dstr dstr_split_tokens (dstr src, const char *tkn) {
+	dbuf_dstr sv = dbuf_make_dstr(8);
 
 	dstr dup = dstr_dup(src);
 	char *tok = strtok(dup.cptr, tkn);
 
 	while (tok != NULL) {
-		dstr s = dstr(tok);
-		dbuf_push(&sv, s);
+		dstr s = dstr_from(tok);
+		dbuf_push_dstr(&sv, s);
 
 		tok = strtok(NULL, tkn);
 	}
 
+	d_free(dup.cptr);
 	return sv;
 }
 
-dbuf dstr_split_lines(dstr f) {
+dbuf_dstr dstr_split_lines(dstr f) {
 	return dstr_split_tokens(f, "\n");
 }
 
