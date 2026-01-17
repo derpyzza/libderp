@@ -5,7 +5,7 @@ PROG_NAME = libderp
 
 TEST := test/bin/test
 
-CFLAGS := -Wall -pedantic -g -DDEBUG
+CFLAGS := -Wall -pedantic -g -DDEBUG --std=c11
 
 all: $(OBJ) debug
 

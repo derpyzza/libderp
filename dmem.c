@@ -1,5 +1,6 @@
 #include "derp.h"
 
+#include <stddef.h>
 #include <stdlib.h>
 #include <sys/mman.h>
 
@@ -20,11 +21,9 @@ void dalloc_set_default(d_allocator alloc) {
 
 void * default_malloc(isize l, bool clear, d_alloc_data data) {
   (void)data;
-
   dassert(l > 0, "malloc size must not be zero");
 
   void *ptr = malloc(l);
-  dassert(ptr != NULL, "malloc returned null pointer :(")
 
   if(clear) {
     memset(ptr, 0, l);
@@ -34,12 +33,9 @@ void * default_malloc(isize l, bool clear, d_alloc_data data) {
 
 void * default_realloc(void* block, isize l, d_alloc_data data) {
   (void)data;
-
   dassert(l > 0, "realloc size must not be zero");
 
   void *ptr = realloc(block, l);
-  dassert(ptr != NULL, "realloc returned null pointer :(")
-
   return ptr;
 }
 

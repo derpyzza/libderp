@@ -1,28 +1,37 @@
 #include "derp.h"
 
 void darena_init(d_arena * buf, isize size) {
-  buf->size = size;
-  buf->allocated = 0;
-  buf->buf = 0;
+  buf->capacity = size;
+  buf->size = 0;
+  buf->buf = d_alloc(size);
 }
 
-// initializes and allocates memory for an arena object
-d_arena darena_init_alloc (isize size) {
-  d_arena arr = {0};
-  darena_init(&arr, size);
-  arr.buf = d_alloc(sizeof(size));
-  if(!arr.buf) { dlog_error("couldnt allocate new arena"); }
-  return arr;
-}
+void * darena_alloc (d_arena *buf, isize size) {
+  size = d_align(size, 7);
 
-// allocates memory given an arena
-void * darena_alloc (d_arena *buf, isize len) {
-  void * t = buf->buf + buf->allocated;
-  buf->allocated += len;
+  if(buf->size + size > buf->capacity) {
+    isize new_cap = buf->size * 2;
+
+    if(new_cap < buf->size + size) {
+      new_cap = buf->size + size;
+    }
+
+    u8 * data = d_realloc(buf->buf, new_cap);
+    if (!data) {
+      return NULL;
+    }
+
+    buf->buf = data;
+    buf->capacity = new_cap;
+  }
+  
+  void *ptr = buf->buf + buf->size;
+  buf->size += size;
   buf->allocations++;
-  return t;
+  return ptr;
 }
+
 void darena_free (d_arena* buf) {
-  buf->allocated = 0;
+  buf->size = 0;
   buf->allocations = 0;
 }

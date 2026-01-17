@@ -2,3 +2,4 @@
 -Wpedantic
 -Iinclude/libderp
 -Isrc
+-std=c11
