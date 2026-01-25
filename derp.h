@@ -220,7 +220,10 @@ void darena_init (d_arena *buf, isize size);
 
 // allocates memory given an arena
 void * darena_alloc (d_arena *buf, isize len);
-void darena_free (d_arena* buf);
+// clears an arena for the next use
+void darena_clear ( d_arena* buf );
+// frees all allocated memory
+void darena_free ( d_arena* buf );
 
 // === DBUF ===
 

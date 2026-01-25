@@ -31,7 +31,13 @@ void * darena_alloc (d_arena *buf, isize size) {
   return ptr;
 }
 
+void darena_clear ( d_arena* buf ) {
+  buf->size = 0;
+  buf->allocations = 0;
+}
+
 void darena_free (d_arena* buf) {
   buf->size = 0;
   buf->allocations = 0;
+  d_free(buf->buf);
 }
