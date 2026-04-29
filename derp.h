@@ -120,11 +120,20 @@ void dalloc_set_default(d_allocator alloc);
 // === Allocator Macros ===
 
 // arena allocator
+// a simple arena allocator that uses a linked list of buckets for
+// growing allocations
+
+typedef struct d_bucket {
+  struct d_bucket * next;
+  isize index, size;
+
+  isize data[];
+} d_bucket;
+
 typedef struct d_arena {
-  u8* buf;  
-  isize size, // total allocated bytes
-        capacity;
   int allocations; // total allocations done
+  d_bucket * head;
+  d_bucket * tail;
 } d_arena;
 
 // type-unsafe dynamic array

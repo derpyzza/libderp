@@ -1,43 +1,61 @@
 #include "derp.h"
 
+d_bucket * dbucket_new(isize size) {
+  isize sb = sizeof(d_bucket) + sizeof(isize) * size;
+
+  d_bucket * b = d_alloc(sb);
+  b->next = NULL;
+  b->size = size;
+  b->index = 0;
+  return b;
+}
+
 void darena_init(d_arena * buf, isize size) {
-  buf->capacity = size;
-  buf->size = 0;
-  buf->buf = d_alloc(size);
+  d_bucket * buck = dbucket_new(size);
+  buf->head = buck;
+  buf->tail = buck;
 }
 
 void * darena_alloc (d_arena *buf, isize size) {
-  size = d_align(size, 7);
+  size = d_align(size, sizeof(isize) - 1);
 
-  if(buf->size + size > buf->capacity) {
-    isize new_cap = buf->size * 2;
-
-    if(new_cap < buf->size + size) {
-      new_cap = buf->size + size;
-    }
-
-    u8 * data = d_realloc(buf->buf, new_cap);
-    if (!data) {
-      return NULL;
-    }
-
-    buf->buf = data;
-    buf->capacity = new_cap;
+  if(buf->tail == NULL) {
+    buf->tail = dbucket_new(size);
+    buf->head = buf->tail;
   }
-  
-  void *ptr = buf->buf + buf->size;
-  buf->size += size;
+
+  while(buf->tail->index + size > buf->tail->size && buf->tail->next != NULL ) {
+    buf->tail = buf->tail->next;
+  }
+
+  if (buf->tail->index + size > buf->tail->size) {
+    buf->tail->next = dbucket_new(size);
+    buf->tail = buf->tail->next;
+  }
+
+  void *result = &buf->tail->data[buf->tail->index];
+  buf->tail->index += size;
+  return result;
+
   buf->allocations++;
-  return ptr;
 }
 
 void darena_clear ( d_arena* buf ) {
-  buf->size = 0;
-  buf->allocations = 0;
+  for (d_bucket * b = buf->head; b != NULL; b = b->next ) {
+    b->index = 0;
+  }
+
+  buf->tail = buf->head;
 }
 
 void darena_free (d_arena* buf) {
-  buf->size = 0;
-  buf->allocations = 0;
-  d_free(buf->buf);
+  d_bucket * b = buf->head;
+  while ( b ) {
+    d_bucket * bb = b;
+    b = b->next;
+    d_free(bb);
+  }
+
+  buf->head = NULL;
+  buf->tail = NULL;
 }
