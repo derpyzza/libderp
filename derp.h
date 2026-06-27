@@ -10,6 +10,10 @@
 #include <stdbool.h>
 #include <string.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef int8_t       i8;
 typedef int16_t      i16;
 typedef int32_t      i32;
@@ -472,3 +476,7 @@ bool d_char_is_digit    (char c);
 bool d_char_is_alpha    (char c);
 u8   d_char_to_digit    (char c);
 bool d_char_is_alphanum (char c);
+
+#ifdef __cplusplus
+}
+#endif
