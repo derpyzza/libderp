@@ -2,7 +2,6 @@
 
 #include <stddef.h>
 #include <stdlib.h>
-#include <sys/mman.h>
 
 void * default_malloc(isize l, bool clear, d_alloc_data);
 void * default_realloc(void* data, isize l, d_alloc_data);

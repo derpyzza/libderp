@@ -25,6 +25,10 @@ debug: CFLAGS += -DDERP_DEBUG -DDLOG_COLORS
 release: CFLAGS += -O2
 release: clean
 
+install: release
+	cp ./derp.h ./d_buf_macro.h /usr/local/include/libderp/
+	cp ./libderp.a /usr/local/lib/
+
 debug release: $(PROG_NAME).a
 
 $(PROG_NAME).a: $(OBJ_FILES)
