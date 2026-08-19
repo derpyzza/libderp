@@ -18,7 +18,7 @@ dstr dstr_new(isize init) {
 }
 
 dstr dstr_from(char * from) {
-	isize len = strlen(from) + 1;
+	isize len = strlen(from);
 	dstr str = dstr_new(len);
 	memcpy(str.cptr, from, len);
 	return str;
