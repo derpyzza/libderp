@@ -11,8 +11,19 @@ u64 dfile_get_size(char* path) {
 	return len;
 }
 
-
 dstr dfile_read(char* path) {
+	return dfile_read_alloc(path, def_allocator);
+}
+
+dstr dfile_read_bytes(char* path, u64 bytes) {
+	return dfile_read_bytes_alloc(path, bytes, def_allocator);
+}
+
+dbuf_dstr dfile_read_lines (char* path) {
+	return dfile_read_lines_alloc(path, def_allocator);
+}
+
+dstr dfile_read_alloc (char* path, d_allocator alloc) {
   dassert(path != NULL, "Filepath is NULL");
 
 	FILE *in = fopen(path, "rb");
@@ -24,7 +35,7 @@ dstr dfile_read(char* path) {
 	out.len = ftell(in); 
 	rewind(in); 
 
-	out.cptr = d_alloc(out.len + 1);
+	out.cptr = dalloc_alloc(alloc, out.len + 1);
 
 	isize bufsread = fread(out.cptr, 1, out.len, in);
 	if ( bufsread < out.len ) {
@@ -36,10 +47,9 @@ dstr dfile_read(char* path) {
 	return out;
 }
 
-
-dstr dfile_read_bytes(char* path, u64 bytes) {
+dstr dfile_read_bytes_alloc (char* path, u64 bytes, d_allocator alloc) {
 	FILE *in = fopen(path, "rb");
-	dstr out = dstr_new(bytes + 1);
+	dstr out = dstr_new(bytes + 1, alloc);
 	if (!in) {
 		dlog_error("could not open file [%s], check if it exists?\n", path);
 		return out;
@@ -60,9 +70,9 @@ dstr dfile_read_bytes(char* path, u64 bytes) {
 	return out;
 }
 
-dbuf_dstr dfile_read_lines(char *path) {
+dbuf_dstr dfile_read_lines_alloc (char *path, d_allocator alloc) {
 	dstr s = dfile_read(path);
-	dbuf_dstr out = dstr_split_lines(s);
+	dbuf_dstr out = dstr_split_lines(s, alloc);
 	d_free(s.cptr);
 	return out;
 }

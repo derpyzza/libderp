@@ -493,9 +493,15 @@ float dstr_parse_float(dstr src); // FIXME: Unimplemented
 
 u64 dfile_get_size(char* path);
 
-dstr dfile_read           (char* file_path);
-dstr dfile_read_bytes     (char* file_path, u64 bytes);
-dbuf_dstr dfile_read_lines     (char* file_path);
+dstr dfile_read            (char* file_path);
+dstr dfile_read_bytes      (char* file_path, u64 bytes);
+dbuf_dstr dfile_read_lines (char* file_path);
+
+dstr dfile_read_alloc            (char* file_path, d_allocator alloc);
+dstr dfile_read_bytes_alloc      (char* file_path, u64 bytes, d_allocator alloc);
+dbuf_dstr dfile_read_lines_alloc (char* file_path, d_allocator alloc);
+
+
 // dbuf_dstr dfile_read_n_lines   (char* file_path, u64 num_lines); // TODO: Unimplemented
 
 // int dfile_write           (char* file_path, dstr buf); // TODO: Unimplemented
