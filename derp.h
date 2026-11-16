@@ -51,6 +51,13 @@ void assert_fail (const char* expr, const char* file, int line, const char* msg,
 // power of two align up macro
 #define d_align(x, a) ( (x) + ( (a) - 1 ) & ~( (a) - 1 ))
 
+#ifndef MAX
+  #define MAX(a, b) (((a) > (b)) ? (a) : (b))
+#endif
+#ifndef MIN
+  #define MIN(a, b) (((a) < (b)) ? (a) : (b))
+#endif
+
 // array element iterator
 // type: type of element
 // item: item name ( pointer )
@@ -85,6 +92,7 @@ void assert_fail (const char* expr, const char* file, int line, const char* msg,
 
 #include "d_buf_macro.h"
 
+// 
 // memory management shenanigans
 // 
 
@@ -109,18 +117,18 @@ void dalloc_set_default(d_allocator alloc);
 
 // === General Allocator Macros ===
 // allocate using whatever the global allocator is set to.
-#define d_alloc(len) def_allocator.alloc(len, false, (d_alloc_data){__FILE__, __LINE__, def_allocator.ctx})
-#define d_calloc(len, elem) def_allocator.alloc(len * elem, true, (d_alloc_data){__FILE__, __LINE__, def_allocator.ctx})
-#define d_realloc(data, len) def_allocator.realloc(data, len, (d_alloc_data){__FILE__, __LINE__, def_allocator.ctx})
-#define d_free(ptr) def_allocator.free(ptr, (d_alloc_data){__FILE__, __LINE__, def_allocator.ctx})
+#define d_alloc(LEN)         def_allocator.alloc((LEN), false, (d_alloc_data){__FILE__, __LINE__, def_allocator.ctx})
+#define d_calloc(LEN, ELEM)  def_allocator.alloc((LEN) * (ELEM), true, (d_alloc_data){__FILE__, __LINE__, def_allocator.ctx})
+#define d_realloc(DATA, LEN) def_allocator.realloc((DATA), (LEN), (d_alloc_data){__FILE__, __LINE__, def_allocator.ctx})
+#define d_free(PTR)          def_allocator.free((PTR), (d_alloc_data){__FILE__, __LINE__, def_allocator.ctx})
 // === General Allocator Macros ===
 
 // === Allocator Macros ===
 // allocate using the given allocator
-#define dalloc_alloc(alloca, size) alloca.alloc(size, false, (d_alloc_data){__FILE__, __LINE__, alloca.ctx })
-#define dalloc_calloc(alloca, len, elem) alloca.alloc( (len * elem), true, (d_alloc_data){__FILE__, __LINE__, alloca.ctx })
-#define dalloc_realloc(alloca, data, size) alloca.realloc(data, size, (d_alloc_data){__FILE__, __LINE__, alloca.ctx })
-#define dalloc_free(alloca, ptr) alloca.free(ptr, (d_alloc_data){__FILE__, __LINE__, alloca.ctx })
+#define dalloc_alloc(ALLOCA, SIZE)         (ALLOCA).alloc(SIZE, false, (d_alloc_data){__FILE__, __LINE__, (ALLOCA).ctx })
+#define dalloc_calloc(ALLOCA, LEN, ELEM)   (ALLOCA).alloc(((LEN) * (ELEM)), true, (d_alloc_data){__FILE__, __LINE__, (ALLOCA).ctx })
+#define dalloc_realloc(ALLOCA, DATA, SIZE) (ALLOCA).realloc((DATA), (SIZE), (d_alloc_data){__FILE__, __LINE__, (ALLOCA).ctx })
+#define dalloc_free(ALLOCA, PTR)           (ALLOCA).free((PTR), (d_alloc_data){__FILE__, __LINE__, (ALLOCA).ctx })
 // === Allocator Macros ===
 
 // arena allocator
@@ -138,16 +146,21 @@ typedef struct d_arena {
   int allocations; // total allocations done
   d_bucket * head;
   d_bucket * tail;
+
+  isize bucket_size;
+
+  d_allocator alloc;
 } d_arena;
 
 // type-unsafe dynamic array
 // NOTE: it's recommended to use DBUF_DECL to create a new dbuf type instead of using this
 typedef struct dbuf {
-	void* data;      // the data array itself
+	void * data;      // the data array itself
 	isize len        // Max allocated size	
 	    , cur        // Current item || length of the array
 	    , elem_size; // size of one individual element, for alignment purposes
-	d_allocator * alloc;
+
+	d_allocator alloc;
 } dbuf;
 
 // dbuf element iterator
@@ -160,8 +173,8 @@ typedef struct dbuf {
 // dforeach(int, num, nums) {
 //   printf("num is: %i", *num);
 // }
-#define dbuf_foreach(type, item, dbuf) \
-  for ( type * (item) = (dbuf).data; (item) < (dbuf).data + (dbuf).cur; (item)++ )
+#define dbuf_foreach(TYPE, ITEM, DBUF) \
+  for ( TYPE * (ITEM) = (DBUF).data; (ITEM) < (DBUF).data + (DBUF).cur; (ITEM)++ )
 
 // indexed dbuf element iterator
 // type: type of element
@@ -178,15 +191,23 @@ typedef struct dbuf {
   int (index) = 0; \
   for ( type * (item) = (dbuf).data; (item) < (dbuf).data + (dbuf).cur; (item)++, (index)++ )
 
-// nicer string type
+// nicer string type, acts as a non-owning view into another buffer
 typedef struct dstr {
 	char* cptr;
 	isize len;
 } dstr;
 
+
+// dynamic, growable, owning string
+typedef struct dstring {
+  char * cptr;
+  isize cur, len;
+  d_allocator alloc;
+} dstring;
+
 typedef struct dfilepath {
 	dstr full_path; 	// the full path, including the extension
-	dstr path; 			// the path, excluding the extension
+	dstr path; 			  // the path, excluding the extension
 	dstr name;			 	// the file name
 	dstr ext; 				// the file extension
 } dfilepath;
@@ -229,7 +250,7 @@ void dlog_set_output(FILE * f);
 void dlog_func(DLogLevel log_level, const char* file, int line, const char* fmt, ...)DATTR_FORMAT(4, 5);
 
 // initializes an arena object
-void darena_init (d_arena *buf, isize size);
+d_arena darena_init (isize size, d_allocator alloc);
 
 // allocates memory given an arena
 void * darena_alloc (d_arena *buf, isize len);
@@ -237,6 +258,8 @@ void * darena_alloc (d_arena *buf, isize len);
 void darena_clear ( d_arena* buf );
 // frees all allocated memory
 void darena_free ( d_arena* buf );
+
+d_allocator darena_make_allocator( d_arena * arena );
 
 // === DBUF ===
 
@@ -246,30 +269,32 @@ void darena_free ( d_arena* buf );
 // struct
 // contains pointers to the various fields of dbufs
 typedef struct dbuf_data {
-  void ** data; // pointer to array of void*
+  void ** data_ptr; // pointer to the owner struct's void* array
   isize *len, *cur;
   isize elem_size;
-  d_allocator * alloc;
+  d_allocator alloc;
 } dbuf_data;
 
+// internal helper function used by dbuf_decl
+void __populate_dbuf_data(dbuf_data * data, dbuf * n, isize elem_size);
 
 // make new dbuf of size `size`
 void _dbuf_make ( isize size, dbuf_data data );
 // initialize new dbuf from array `from`, of size `size`
-void _dbuf_init ( void **from, isize size, dbuf_data data );
+void _dbuf_init ( const void **from, isize size, dbuf_data data );
 
 // make new dbuf of size `size` with allocator `alloc`
 void _dbuf_make_alloc ( isize size, d_allocator alloc, dbuf_data data );
 // initialize new dbuf from array `from`, of size `size`, with allocator `alloc`
-void _dbuf_init_alloc ( void **from, isize size, d_allocator alloc, dbuf_data data );
+void _dbuf_init_alloc ( const void **from, isize size, d_allocator alloc, dbuf_data data );
 
 // push `item` into dbuf
-void _dbuf_push ( void *item, dbuf_data data );
+void _dbuf_push ( void * item, dbuf_data data );
 // pop item from dbuf
 void* _dbuf_pop ( dbuf_data data );
 
 // insert `item` at `index`
-void _dbuf_insert ( void *item, isize index, dbuf_data data );
+void _dbuf_insert ( void * item, isize index, dbuf_data data );
 // remove `item` at `index`
 void _dbuf_remove ( isize index, dbuf_data data );
 
@@ -281,9 +306,9 @@ void _dbuf_grow ( dbuf_data data );
 void _dbuf_reserve ( isize len, dbuf_data data );
 
 // append array to end of dbuf
-void _dbuf_append ( void** data, isize len, dbuf_data dbuf );
+void _dbuf_append ( const void** data, isize len, dbuf_data dbuf );
 // prepend array to start of dbuf
-void _dbuf_prepend ( void** data, isize len, dbuf_data dbuf );
+void _dbuf_prepend ( const void** data, isize len, dbuf_data dbuf );
 
 // get item at `index`
 void* _dbuf_get ( isize index, dbuf_data data );
@@ -302,96 +327,97 @@ void _dbuf_free ( dbuf_data data );
 // dbuf_remove_n_items := remove N items from middle of array
 
 #define dbuf_make(vecptr, type, size)                                          \
-  _dbuf_make(size, (dbuf_data){.data = (void **)&(vecptr)->data,               \
+  _dbuf_make(size, (dbuf_data){.data_ptr = (void **)&(vecptr)->data,           \
                                .len = &(vecptr)->len,                          \
                                .cur = &(vecptr)->cur,                          \
                                .elem_size = sizeof(type),                      \
                                .alloc = (vecptr)->alloc})
 #define dbuf_init(vecptr, type, from, size)                                    \
   _dbuf_init((void **)from, size,                                              \
-             (dbuf_data){.data = (void **)&(vecptr)->data,                     \
+             (dbuf_data){.data_ptr = (void **)&(vecptr)->data,                 \
                          .len = &(vecptr)->len,                                \
                          .cur = &(vecptr)->cur,                                \
                          .elem_size = sizeof(type),                            \
                          .alloc = (vecptr)->alloc})
 
 #define dbuf_make_alloc(vecptr, type, _size, _alloc)                           \
-  _dbuf_make(_size, (dbuf_data){.data = (void **)&(vecptr)->data,              \
+  _dbuf_make(_size, (dbuf_data){.data_ptr = (void **)&(vecptr)->data,          \
                                 .len = &(vecptr)->len,                         \
                                 .cur = &(vecptr)->cur,                         \
                                 .elem_size = sizeof(type),                     \
-                                .alloc = &_alloc})
+                                .alloc = _alloc})
 #define dbuf_init_alloc(vecptr, type, _from, _size, _alloc)                    \
   _dbuf_init((void **)_from, _size,                                            \
-             (dbuf_data){.data = (void **)&(vecptr)->data,                     \
+             (dbuf_data){.data_ptr = (void **)&(vecptr)->data,                 \
                          .len = &(vecptr)->len,                                \
                          .cur = &(vecptr)->cur,                                \
                          .elem_size = sizeof(type),                            \
-                         .alloc = &_alloc})
+                         .alloc = _alloc})
 #define dbuf_push(vecptr, type, item)                                          \
-  _dbuf_push(&(type){item}, (dbuf_data){.data = (void **)&(vecptr)->data,      \
+  _dbuf_push(&(type){item}, (dbuf_data){.data_ptr = (void **)&(vecptr)->data,  \
                                         .len = &(vecptr)->len,                 \
                                         .cur = &(vecptr)->cur,                 \
                                         .elem_size = sizeof(type),             \
-                                        .alloc = &(vecptr)->alloc})
+                                        .alloc = (vecptr)->alloc})
 #define dbuf_pop(vecptr, type)                                                 \
-  _dbuf_pop((dbuf_data){.data = (void **)&(vecptr)->data,                      \
+  _dbuf_pop((dbuf_data){.data_ptr = (void **)&(vecptr)->data,                  \
                         .len = &(vecptr)->len,                                 \
                         .cur = &(vecptr)->cur,                                 \
                         .elem_size = sizeof(type),                             \
-                        .alloc = &(vecptr)->alloc})
+                        .alloc = (vecptr)->alloc})
 #define dbuf_get(vecptr, type, id)                                             \
-  _dbuf_get(id, (dbuf_data){.data = (void **)&(vecptr)->data,                  \
+  _dbuf_get(id, (dbuf_data){.data_ptr = (void **)&(vecptr)->data,              \
                             .len = &(vecptr)->len,                             \
                             .cur = &(vecptr)->cur,                             \
                             .elem_size = sizeof(type),                         \
-                            .alloc = &(vecptr)->alloc})
+                            .alloc = (vecptr)->alloc})
 #define dbuf_set(vecptr, type, id, item)                                       \
   _dbuf_set((void *)item, id,                                                  \
-            (dbuf_data){.data = (void **)&(vecptr)->data,                      \
+            (dbuf_data){.data_ptr = (void **)&(vecptr)->data,                  \
                         .len = &(vecptr)->len,                                 \
                         .cur = &(vecptr)->cur,                                 \
                         .elem_size = sizeof(type),                             \
-                        .alloc = &(vecptr)->alloc})
+                        .alloc = (vecptr)->alloc})
 #define dbuf_insert(vecptr, type, item, id)                                    \
   _dbuf_insert((void *)&(type){item}, id,                                      \
-               (dbuf_data){.data = (void **)&(vecptr)->data,                   \
+               (dbuf_data){.data_ptr = (void **)&(vecptr)->data,               \
                            .len = &(vecptr)->len,                              \
                            .cur = &(vecptr)->cur,                              \
                            .elem_size = sizeof(type),                          \
-                           .alloc = &(vecptr)->alloc})
+                           .alloc = (vecptr)->alloc})
 #define dbuf_remove(vecptr, type, id)                                          \
-  _dbuf_remove(id, (dbuf_data){.data = (void **)&(vecptr)->data,               \
+  _dbuf_remove(id, (dbuf_data){.data_ptr = (void **)&(vecptr)->data,           \
                                .len = &(vecptr)->len,                          \
                                .cur = &(vecptr)->cur,                          \
                                .elem_size = sizeof(type),                      \
-                               .alloc = &(vecptr)->alloc})
+                               .alloc = (vecptr)->alloc})
 
 #define dbuf_append(vecptr, type, arr, len)                                    \
   _dbuf_append((void **)arr, len,                                              \
-               (dbuf_data){.data = (void **)&(vecptr)->data,                   \
+               (dbuf_data){.data_ptr = (void **)&(vecptr)->data,               \
                            .len = &(vecptr)->len,                              \
                            .cur = &(vecptr)->cur,                              \
                            .elem_size = sizeof(type),                          \
-                           .alloc = &(vecptr)->alloc})
+                           .alloc = (vecptr)->alloc})
 
 #define dbuf_prepend(vecptr, type, arr, len)                                   \
   _dbuf_prepend((void **)arr, len,                                             \
-                (dbuf_data){.data = (void **)&(vecptr)->data,                  \
+                (dbuf_data){.data_ptr = (void **)&(vecptr)->data,              \
                             .len = &(vecptr)->len,                             \
                             .cur = &(vecptr)->cur,                             \
                             .elem_size = sizeof(type),                         \
-                            .alloc = &(vecptr)->alloc})
+                            .alloc = (vecptr)->alloc})
 
 #define dbuf_reserve(vecptr, type, len)                                        \
-  _dbuf_reserve(len, (dbuf_data){.data = (void **)&(vecptr)->data,             \
+  _dbuf_reserve(len, (dbuf_data){.data_ptr = (void **)&(vecptr)->data,         \
                                  .len = &(vecptr)->len,                        \
                                  .cur = &(vecptr)->cur,                        \
                                  .elem_size = sizeof(type),                    \
-                                 .alloc = &(vecptr)->alloc})
+                                 .alloc = (vecptr)->alloc})
 
-#define dbuf_free(vecptr) \
-  _dbuf_free((dbuf_data){.data = (void**)&(vecptr)->data, .alloc = &(vecptr)->alloc})
+#define dbuf_free(vecptr)                                                      \
+  _dbuf_free((dbuf_data){.data_ptr = (void **)&(vecptr)->data,                 \
+                         .alloc = (vecptr)->alloc})
 
 // === DSTR ===
 
@@ -404,54 +430,63 @@ dbuf_decl(dstr, dstr)
 // use with `%.*s` when using printf
 #define dstr_fmt(b) (int)(b).len, (b).cptr
 
-// create new string, with an initial size of `init`. allocates
-dstr dstr_new(isize init);
-// copies string data from 'from' to 'to'
-void dstr_copy(dstr *to, dstr *from);
-// creates new string from a given c string. allocates
-dstr dstr_from(char *from);
-// duplicates a string s and returns a copy. allocates
-dstr dstr_dup (dstr s);
+// create new string, with an initial size of `init`
+dstr dstr_new(isize init, d_allocator alloc);
+
+// creates new string from a given c string
+dstr dstr_from(char *from, d_allocator alloc);
+
+// duplicates a string s and returns a copy
+dstr dstr_dup (dstr s, d_allocator alloc);
+
+// append d-string `src` to d-string `dest`
+// i.e dstr_prepend("hello ", "world"), returns dstr("hello world")
+dstr dstr_append      (dstr dest, dstr src, d_allocator alloc);
+
+// append c string ( char * ) `from` to `to`
+// i.e dstr_prepend_cstr("hello ", "world"), returns dstr("hello world")
+dstr dstr_append_cstr (dstr to, const char * from, d_allocator alloc);
+
+// prepend dstr `from` to `to`
+// i.e dstr_prepend(" world", "hello"), returns dstr("hello world")
+dstr dstr_prepend     (dstr to, dstr from, d_allocator alloc);
+
+// prepend c string ( char * ) `from` to `to`
+// i.e dstr_prepend_cstr(" world", "hello"), returns dstr("hello world")
+dstr dstr_prepend_cstr(dstr to, const char * from, d_allocator alloc);
+
 // checks if the given strins are equal in length
 bool dstr_eq(dstr a, dstr b);
-// append d-string `src` to d-string `dest`. allocates
-int dstr_concat_cstr(dstr *dest, char * src);
-// append d-string `src` to d-string `dest`
-int dstr_concat(dstr *dest, dstr* src);
-// append c string ( char * ) `from` to `to`
-void dstr_append_cstr(dstr *to, const char* from);
-// append dstr `from` to `to`
-void dstr_append(dstr * to, dstr from);
+
 // checks if a given dstr `str` starts with a string `st`
 bool dstr_starts_with(dstr str, const char* st);
 
 void dstr_to_lower(dstr);
 void dstr_to_upper(dstr);
 
-// NOTE: these only work with heap or stack allocated strings
-// i.e you cannot pass in string literals to them,
-// nor dstrings that were created with string literals, like:
-// dstr foo = dstr("hello");
-// this will not work.
-
 // replace first instance of `pat` with `sub`
-void dstr_replace     (dstr*, const char* pat, const char* sub);
+dstr dstr_replace     (dstr str, const char* pat, const char* sub, d_allocator alloc);
+
 // replace all instances of `pat` with `sub`
 // FIXME unimplemented
-void dstr_replace_all (dstr*, const char* pat, const char* sub);
+dstr dstr_replace_all (dstr str, const char* pat, const char* sub, d_allocator alloc);
+
 // replace nth instance of `pat` with `sub`
 // FIXME unimplemented
-void dstr_replace_nth (dstr*, int n, const char* pat, const char* sub);
+dstr dstr_replace_nth (dstr str, int n, const char* pat, const char* sub, d_allocator alloc);
+
 // replace n instances of `pat` with `sub`
 // FIXME unimplemented
-void dstr_replace_n   (dstr*, int n, const char* pat, const char* sub);
+dstr dstr_replace_n   (dstr str, int n, const char* pat, const char* sub, d_allocator alloc);
 
+dbuf_dstr dstr_split_lines   (dstr src, d_allocator alloc);
 
-dbuf_dstr dstr_split_lines   (dstr src);
-dbuf_dstr dstr_split_n_lines (dstr src, isize n); // FIXME: unimplemented
-dbuf_dstr dstr_split_tokens  (dstr src, const char* tkn);
+dbuf_dstr dstr_split_n_lines (dstr src, isize n, d_allocator alloc); // FIXME: unimplemented
+
+dbuf_dstr dstr_split_tokens  (dstr src, const char* tkn, d_allocator alloc);
 
 int dstr_parse_int(dstr src);     // FIXME: Unimplemented
+
 float dstr_parse_float(dstr src); // FIXME: Unimplemented
 
 // === DFILE ===

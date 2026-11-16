@@ -28,14 +28,14 @@ int main(void) {
   dstr_to_upper(f);
   dlog_debug("dstr: %.*s", dstr_fmt(f));
 
-  dstr_replace(&f, "THERE", "[YOUR NAME]");
+  // dstr_replace(&f, "THERE", "[YOUR NAME]");
   dlog_debug("dstr: %.*s", dstr_fmt(f));
 
 
-  return 0;
-
   int str[6] = {'H', 'e', 'l', 'l', 'o', '\0'};
   dbuf_nums chars = dbuf_nums_init(str, 6);
+  printf("dbuf_nums char: cur: %li, cap: %li, %s\n", chars.cur, chars.len, chars.data ? "EXISTS" : "NULL");
+  printf("=== PRINTING CHARS ===\n");
   dbuf_foreach(int, _char, chars) {
     printf("char is %c\n", (char)*_char);
   }

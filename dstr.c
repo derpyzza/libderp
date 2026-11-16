@@ -1,15 +1,14 @@
 #include "derp.h"
 
 #include <ctype.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-dstr dstr_new(isize init) {
+dstr dstr_new(isize init, d_allocator alloc) {
 	dstr str = {0};
 
 	str.len = init;
-	str.cptr = d_alloc(sizeof(char) * str.len);
+	str.cptr = dalloc_alloc(alloc, sizeof(char) * str.len);
 	if(!str.cptr) {
 		dlog_error("Could not allocate memory for string of size %zd", init);
 	}
@@ -17,29 +16,87 @@ dstr dstr_new(isize init) {
 	return str;
 }
 
-dstr dstr_from(char * from) {
+dstr dstr_from(char * from, d_allocator alloc) {
 	isize len = strlen(from);
-	dstr str = dstr_new(len);
+	dstr str = dstr_new(len, alloc);
 	memcpy(str.cptr, from, len);
 	return str;
 }
 
-int dstr_concat_cstr(dstr *dest, char * src) {
-	dassert(dest != NULL, "dest string must not be NULL");
-	dassert( src != NULL, "src string must not be NULL");
+dstr dstr_dup(dstr s, d_allocator alloc) {
+	dstr out;
+	out.len = s.len;
+	out.cptr = dalloc_alloc(alloc, out.len);
+	memcpy(out.cptr, s.cptr, out.len);
+	return out;
+}
+
+dstr dstr_append_cstr(dstr dest, const char * src, d_allocator alloc) {
+	dassert(dest.cptr != NULL, "dest string must not be NULL");
+	dassert(src != NULL, "src string must not be NULL");
+	dstr out = {0};
 
 	isize len = strlen(src);
 
 	// allocate new buffer for string
-	char * tmp = d_alloc(sizeof(char) * len + dest->len + 1);
+	out.cptr = dalloc_alloc(alloc, sizeof(char) * len + dest.len + 1);
 	// FIXME: better error handling ...
-	if(!tmp) return -1;
+	if(!out.cptr) return out;
 
-	for(int i = 0; i < dest->len; i++) tmp[i] = dest->cptr[i];
-	for(int i = 0; i < len; i++) tmp[i+dest->len] = src[i];
-	dest->cptr = tmp;
-	dest->len += len;
-	return 0;
+	for(int i = 0; i < dest.len; i++) out.cptr[i] = dest.cptr[i];
+	for(int i = 0; i < len; i++) out.cptr[i+dest.len] = src[i];
+	return out;
+}
+
+dstr dstr_append (dstr dest, dstr src, d_allocator alloc) {
+	dassert(dest.cptr != NULL, "dest string must not be NULL");
+	dassert(src.cptr != NULL, "src string must not be NULL");
+	dstr out = {0};
+
+	isize len = src.len;
+
+	// allocate new buffer for string
+	out.cptr = dalloc_alloc(alloc, sizeof(char) * len + dest.len + 1);
+	// FIXME: better error handling ...
+	if(!out.cptr) return out;
+
+	for(int i = 0; i < dest.len; i++) out.cptr[i] = dest.cptr[i];
+	for(int i = 0; i < len; i++) out.cptr[i+dest.len] = src.cptr[i];
+	return out;
+}
+
+dstr dstr_prepend_cstr(dstr dest, const char * src, d_allocator alloc) {
+	dassert(dest.cptr != NULL, "dest string must not be NULL");
+	dassert(src != NULL, "src string must not be NULL");
+	dstr out = {0};
+
+	isize len = strlen(src);
+
+	// allocate new buffer for string
+	out.cptr = dalloc_alloc(alloc, sizeof(char) * len + dest.len + 1);
+	// FIXME: better error handling ...
+	if(!out.cptr) return out;
+
+	for(int i = 0; i < len; i++) out.cptr[i] = src[i];
+	for(int i = 0; i < dest.len; i++) out.cptr[i+len] = dest.cptr[i];
+	return out;
+}
+
+dstr dstr_prepend (dstr dest, dstr src, d_allocator alloc) {
+	dassert(dest.cptr != NULL, "dest string must not be NULL");
+	dassert(src.cptr != NULL, "src string must not be NULL");
+	dstr out = {0};
+
+	isize len = src.len;
+
+	// allocate new buffer for string
+	out.cptr = dalloc_alloc(alloc, sizeof(char) * len + dest.len + 1);
+	// FIXME: better error handling ...
+	if(!out.cptr) return out;
+
+	for(int i = 0; i < len; i++) out.cptr[i] = src.cptr[i];
+	for(int i = 0; i < dest.len; i++) out.cptr[i+len] = dest.cptr[i];
+	return out;
 }
 
 bool dstr_eq(dstr a, dstr b) {
@@ -54,30 +111,14 @@ bool dstr_eq(dstr a, dstr b) {
   return 1;
 }
 
-void dstr_copy(dstr* to, dstr* from) {
-	if(to->len < from->len) {
-		to->cptr = realloc(to->cptr, from->len);
-	} 
+dbuf_dstr dstr_split_tokens  (dstr src, const char* tkn, d_allocator alloc) {
+	dbuf_dstr sv = dbuf_dstr_make_alloc(8, alloc);
 
-	memcpy(to->cptr, from->cptr, from->len);
-}
-
-dstr dstr_dup (dstr s) {
-	dstr out;
-	out.len = s.len;
-	out.cptr = d_alloc(out.len);
-	memcpy(out.cptr, s.cptr, out.len);
-	return out;
-}
-
-dbuf_dstr dstr_split_tokens (dstr src, const char *tkn) {
-	dbuf_dstr sv = dbuf_dstr_make(8);
-
-	dstr dup = dstr_dup(src);
+	dstr dup = dstr_dup(src, alloc);
 	char *tok = strtok(dup.cptr, tkn);
 
 	while (tok != NULL) {
-		dstr s = dstr_from(tok);
+		dstr s = dstr_from(tok, alloc);
 		dbuf_dstr_push(&sv, s);
 
 		tok = strtok(NULL, tkn);
@@ -86,14 +127,8 @@ dbuf_dstr dstr_split_tokens (dstr src, const char *tkn) {
 	d_free(dup.cptr);
 	return sv;
 }
-
-dbuf_dstr dstr_split_lines(dstr f) {
-	return dstr_split_tokens(f, "\n");
-}
-
-void dstr_grow(dstr* s, isize len) {
-	s->len += len;
-	s->cptr = (char*)realloc(0, sizeof(char) * s->len);
+dbuf_dstr dstr_split_lines(dstr src, d_allocator alloc) {
+	return dstr_split_tokens(src, "\n", alloc);
 }
 
 u8 d_char_to_digit(char c) {
@@ -125,25 +160,26 @@ void dstr_to_upper( dstr s ) {
 	}
 }
 
-void dstr_replace (dstr * str, const char* pat, const char* sub) {
+dstr dstr_replace (dstr str, const char* pat, const char* sub, d_allocator alloc) {
+	dstr out = {0};
 	todo();
-	char * _sub = strstr(str->cptr, pat);
-
-	if(_sub == NULL && strcmp(pat, sub) == 0) return;
-
-	isize len = strlen(pat);
-	dstr_grow(str, 512);
-	sprintf(_sub, "%s%s", sub, _sub + len);
+	return out;
 }
 
-void dstr_replace_all (dstr *str, const char* pat, const char* sub) {
+dstr dstr_replace_all (dstr str, const char* pat, const char* sub, d_allocator alloc) {
+	dstr out = {0};
 	todo();
+	return out;
 }
 
-void dstr_replace_nth (dstr *str, int n, const char* pat, const char* sub) {
+dstr dstr_replace_nth (dstr str, int n, const char* pat, const char* sub, d_allocator alloc) {
+	dstr out = {0};
 	todo();
+	return out;
 }
 
-void dstr_replace_n   (dstr *str, int n, const char* pat, const char* sub) {
+dstr dstr_replace_n   (dstr str, int n, const char* pat, const char* sub, d_allocator alloc) {
+	dstr out = {0};
 	todo();
+	return out;
 }
