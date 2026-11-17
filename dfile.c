@@ -49,16 +49,19 @@ dstr dfile_read_alloc (char* path, d_allocator alloc) {
 
 dstr dfile_read_bytes_alloc (char* path, u64 bytes, d_allocator alloc) {
 	FILE *in = fopen(path, "rb");
-	dstr out = dstr_new(bytes + 1, alloc);
+	dstr out = {0};
 	if (!in) {
 		dlog_error("could not open file [%s], check if it exists?\n", path);
 		return out;
 	}
 
+	out.len = (isize)bytes;
+	out.cptr = dalloc_alloc(alloc, out.len + 1);
 	if (out.cptr == NULL) {
 		fclose(in);
 		return out;
 	}
+	out.cptr[out.len] = '\0';
 
 	isize bufsread = fread(out.cptr, 1, out.len, in);
 	if ( bufsread < out.len ) {
@@ -78,11 +81,11 @@ dbuf_dstr dfile_read_lines_alloc (char *path, d_allocator alloc) {
 }
 
 // split the file path on the '.' into 'name' and 'ext' strings
-dfilepath split_path(char* raw_path) {
+dfilepath split_path(const char* raw_path) {
 	isize len = strlen(raw_path);
 	char* name = (char*) d_alloc(sizeof(char) * len);
 	int id = 0;
-	char* c = raw_path;
+	char* c = (char*)raw_path;
 	while(*c != '.') {
 		name[id] = *c;
 		id++;
@@ -95,8 +98,8 @@ dfilepath split_path(char* raw_path) {
 	if(ext != NULL) strcpy(ext, c);
 	else dlog_error("could not malloc file ext\n");
 	return (dfilepath){ 
-		.full_path = dstr(raw_path),
-		.path = dstr(name),
-		.ext = dstr(ext)
+		.full_path = {.cptr = (char*)raw_path, .len = len},
+		.path = {.cptr = name, .len = id},
+		.ext = {.cptr = ext, .len = len - id}
 	};
 }

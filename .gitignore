@@ -1,4 +1,5 @@
 libderp.a
 obj/
+tests/bin/
 input.txt
 a.out

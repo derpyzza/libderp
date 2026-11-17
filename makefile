@@ -18,7 +18,9 @@ SRC_FILES := $(wildcard $(SRC)/**.c)
 OBJ_FILES := $(patsubst $(SRC)/%.c, $(OBJ)/%.o, $(SRC_FILES))
 
 check: $(PROG_NAME).a
-	make -C test test
+	$(MAKE) -C tests test
+
+test: check
 
 debug: CFLAGS += -DDERP_DEBUG -DDLOG_COLORS
 
@@ -34,11 +36,11 @@ debug release: $(PROG_NAME).a
 $(PROG_NAME).a: $(OBJ_FILES)
 	ar rcs $@ $(OBJ_FILES)
 
-$(OBJ)/%.o: $(SRC)/%.c
+$(OBJ)/%.o: $(SRC)/%.c $(SRC)/derp.h $(SRC)/d_buf_macro.h
 	@echo building $@...
 	$(CC) -c $< -o $@ $(CFLAGS) $(INCLUDE_FILES)
 
-$(OBJ)/%.o: $(SRC)/*/%.c
+$(OBJ)/%.o: $(SRC)/*/%.c $(SRC)/derp.h $(SRC)/d_buf_macro.h
 	@echo building $@...
 	$(CC) -c $< -o $@ $(CFLAGS) $(INCLUDE_FILES)
 
@@ -47,5 +49,6 @@ $(TEST_OBJ_DIR)/%.o: $(TEST_SRC_DIR)/%.c $(TEST_DIR)/%.c
 
 clean:
 	rm -rf $(OBJ)/* $(PROG_NAME).a test/bin/*
+	$(MAKE) -C tests clean
 
-.PHONY: all clean
+.PHONY: all clean check test debug release

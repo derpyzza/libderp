@@ -333,7 +333,7 @@ void _dbuf_free ( dbuf_data data );
                                .elem_size = sizeof(type),                      \
                                .alloc = (vecptr)->alloc})
 #define dbuf_init(vecptr, type, from, size)                                    \
-  _dbuf_init((void **)from, size,                                              \
+  _dbuf_init((const void *[]){(const void *)(from)}, size,                     \
              (dbuf_data){.data_ptr = (void **)&(vecptr)->data,                 \
                          .len = &(vecptr)->len,                                \
                          .cur = &(vecptr)->cur,                                \
@@ -347,7 +347,7 @@ void _dbuf_free ( dbuf_data data );
                                 .elem_size = sizeof(type),                     \
                                 .alloc = _alloc})
 #define dbuf_init_alloc(vecptr, type, _from, _size, _alloc)                    \
-  _dbuf_init((void **)_from, _size,                                            \
+  _dbuf_init((const void *[]){(const void *)(_from)}, _size,                   \
              (dbuf_data){.data_ptr = (void **)&(vecptr)->data,                 \
                          .len = &(vecptr)->len,                                \
                          .cur = &(vecptr)->cur,                                \
@@ -372,7 +372,7 @@ void _dbuf_free ( dbuf_data data );
                             .elem_size = sizeof(type),                         \
                             .alloc = (vecptr)->alloc})
 #define dbuf_set(vecptr, type, id, item)                                       \
-  _dbuf_set((void *)item, id,                                                  \
+  _dbuf_set(id, &(type){item},                                                 \
             (dbuf_data){.data_ptr = (void **)&(vecptr)->data,                  \
                         .len = &(vecptr)->len,                                 \
                         .cur = &(vecptr)->cur,                                 \
@@ -508,7 +508,7 @@ dbuf_dstr dfile_read_lines_alloc (char* file_path, d_allocator alloc);
 // int dfile_write_bytes     (char* file_path, dstr buf, isize bytes); // TODO: Unimplemented
 // int dfile_write_lines     (char* file_path, int num_lines, dbuf_dstr buf, u64* buf_len); // TODO: Unimplemented
 
-dfilepath split_path(char* path);
+dfilepath split_path(const char* path);
 
 // === MISC FUNCITONS ===
 

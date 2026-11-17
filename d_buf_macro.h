@@ -29,6 +29,7 @@
     dbuf_data buf = {0};                                                       \
     dbuf_##N d = {0};                                                          \
                                                                                \
+    d.alloc = def_allocator;                                                   \
     __pop_dbuf_data(buf, d, T);                                                \
     _dbuf_make(init, buf);                                                     \
     return d;                                                                  \
@@ -38,6 +39,7 @@
     dbuf_data buf = {0};                                                       \
     dbuf_##N d = {0};                                                          \
                                                                                \
+    d.alloc = def_allocator;                                                   \
     __pop_dbuf_data(buf, d, T);                                                \
     _dbuf_init((const void **)&data, init, buf);                               \
     return d;                                                                  \

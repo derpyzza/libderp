@@ -56,8 +56,9 @@ void _dbuf_grow ( dbuf_data data ) {
 void _dbuf_reserve(isize len, dbuf_data data) {
 	dassert(len > 0, "reserve length must not be zero or negative, %zd", len);
 
-	*data.data_ptr = dalloc_realloc((data.alloc), *data.data_ptr, len * data.elem_size);
-	*data.len += len;
+	isize new_len = *data.len + len;
+	*data.data_ptr = dalloc_realloc((data.alloc), *data.data_ptr, new_len * data.elem_size);
+	*data.len = new_len;
 }
 
 

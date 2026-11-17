@@ -26,8 +26,9 @@ dstr dstr_from(char * from, d_allocator alloc) {
 dstr dstr_dup(dstr s, d_allocator alloc) {
 	dstr out;
 	out.len = s.len;
-	out.cptr = dalloc_alloc(alloc, out.len);
+	out.cptr = dalloc_alloc(alloc, out.len + 1);
 	memcpy(out.cptr, s.cptr, out.len);
+	out.cptr[out.len] = '\0';
 	return out;
 }
 
@@ -45,6 +46,8 @@ dstr dstr_append_cstr(dstr dest, const char * src, d_allocator alloc) {
 
 	for(int i = 0; i < dest.len; i++) out.cptr[i] = dest.cptr[i];
 	for(int i = 0; i < len; i++) out.cptr[i+dest.len] = src[i];
+	out.len = dest.len + len;
+	out.cptr[out.len] = '\0';
 	return out;
 }
 
@@ -62,6 +65,8 @@ dstr dstr_append (dstr dest, dstr src, d_allocator alloc) {
 
 	for(int i = 0; i < dest.len; i++) out.cptr[i] = dest.cptr[i];
 	for(int i = 0; i < len; i++) out.cptr[i+dest.len] = src.cptr[i];
+	out.len = dest.len + len;
+	out.cptr[out.len] = '\0';
 	return out;
 }
 
@@ -79,6 +84,8 @@ dstr dstr_prepend_cstr(dstr dest, const char * src, d_allocator alloc) {
 
 	for(int i = 0; i < len; i++) out.cptr[i] = src[i];
 	for(int i = 0; i < dest.len; i++) out.cptr[i+len] = dest.cptr[i];
+	out.len = dest.len + len;
+	out.cptr[out.len] = '\0';
 	return out;
 }
 
@@ -96,6 +103,8 @@ dstr dstr_prepend (dstr dest, dstr src, d_allocator alloc) {
 
 	for(int i = 0; i < len; i++) out.cptr[i] = src.cptr[i];
 	for(int i = 0; i < dest.len; i++) out.cptr[i+len] = dest.cptr[i];
+	out.len = dest.len + len;
+	out.cptr[out.len] = '\0';
 	return out;
 }
 

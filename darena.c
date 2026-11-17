@@ -45,14 +45,14 @@ d_bucket * dbucket_new(isize size, d_allocator alloc) {
 
 d_arena darena_init(isize size, d_allocator alloc) {
   d_arena out = { 0 };
+  out.alloc = alloc;
+  out.bucket_size = size;
   d_bucket * buck = dbucket_new(size, out.alloc);
   out.head = buck;
   out.tail = buck;
   out.allocations = 0;
-  out.alloc = alloc;
   return out;
 }
-#define ma
 
 void * darena_alloc (d_arena *buf, isize size) {
   if(size < 0) return NULL;
@@ -68,7 +68,8 @@ void * darena_alloc (d_arena *buf, isize size) {
   }
 
   if (buf->tail->index + _size > buf->tail->size) {
-    d_bucket * nb = dbucket_new(size, buf->alloc);
+    d_bucket * nb = dbucket_new(MAX(buf->bucket_size, _size), buf->alloc);
+    if(!nb) return NULL;
     buf->tail->next = nb;
     buf->tail = nb;
   }

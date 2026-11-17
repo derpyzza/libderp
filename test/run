@@ -1,3 +1,0 @@
-#!/bin/zsh
-
-clang --std=c11 ./main.c ../libderp.a -I../derp.h -fsanitize=address -g ; ./a.out
