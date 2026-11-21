@@ -231,6 +231,7 @@ typedef enum {
 static struct dlogger {
   DLogLevel level;
   FILE * f_out;
+  bool print_dbg_info;
 } def_logger;
 
 typedef void (*logFunc)(DLogLevel, const char* file, int line, const char* fmt, ...);
@@ -274,9 +275,6 @@ typedef struct dbuf_data {
   isize elem_size;
   d_allocator alloc;
 } dbuf_data;
-
-// internal helper function used by dbuf_decl
-void __populate_dbuf_data(dbuf_data * data, dbuf * n, isize elem_size);
 
 // make new dbuf of size `size`
 void _dbuf_make ( isize size, dbuf_data data );
@@ -491,15 +489,15 @@ float dstr_parse_float(dstr src); // FIXME: Unimplemented
 
 // === DFILE ===
 
-u64 dfile_get_size(char* path);
+u64 dfile_get_size(const char* path);
 
-dstr dfile_read            (char* file_path);
-dstr dfile_read_bytes      (char* file_path, u64 bytes);
-dbuf_dstr dfile_read_lines (char* file_path);
+dstr dfile_read            (const char* file_path);
+dstr dfile_read_bytes      (const char* file_path, u64 bytes);
+dbuf_dstr dfile_read_lines (const char* file_path);
 
-dstr dfile_read_alloc            (char* file_path, d_allocator alloc);
-dstr dfile_read_bytes_alloc      (char* file_path, u64 bytes, d_allocator alloc);
-dbuf_dstr dfile_read_lines_alloc (char* file_path, d_allocator alloc);
+dstr dfile_read_alloc            (const char* file_path, d_allocator alloc);
+dstr dfile_read_bytes_alloc      (const char* file_path, u64 bytes, d_allocator alloc);
+dbuf_dstr dfile_read_lines_alloc (const char* file_path, d_allocator alloc);
 
 
 // dbuf_dstr dfile_read_n_lines   (char* file_path, u64 num_lines); // TODO: Unimplemented

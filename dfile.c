@@ -1,6 +1,6 @@
 #include "derp.h"
 
-u64 dfile_get_size(char* path) {
+u64 dfile_get_size(const char* path) {
 	FILE *in = fopen(path, "rb");
 	dassert(in != NULL, "Could not open file [%s], check if it exists?\n", path);
 
@@ -11,19 +11,19 @@ u64 dfile_get_size(char* path) {
 	return len;
 }
 
-dstr dfile_read(char* path) {
+dstr dfile_read(const char* path) {
 	return dfile_read_alloc(path, def_allocator);
 }
 
-dstr dfile_read_bytes(char* path, u64 bytes) {
+dstr dfile_read_bytes(const char* path, u64 bytes) {
 	return dfile_read_bytes_alloc(path, bytes, def_allocator);
 }
 
-dbuf_dstr dfile_read_lines (char* path) {
+dbuf_dstr dfile_read_lines (const char* path) {
 	return dfile_read_lines_alloc(path, def_allocator);
 }
 
-dstr dfile_read_alloc (char* path, d_allocator alloc) {
+dstr dfile_read_alloc (const char* path, d_allocator alloc) {
   dassert(path != NULL, "Filepath is NULL");
 
 	FILE *in = fopen(path, "rb");
@@ -47,7 +47,7 @@ dstr dfile_read_alloc (char* path, d_allocator alloc) {
 	return out;
 }
 
-dstr dfile_read_bytes_alloc (char* path, u64 bytes, d_allocator alloc) {
+dstr dfile_read_bytes_alloc (const char* path, u64 bytes, d_allocator alloc) {
 	FILE *in = fopen(path, "rb");
 	dstr out = {0};
 	if (!in) {
@@ -73,7 +73,7 @@ dstr dfile_read_bytes_alloc (char* path, u64 bytes, d_allocator alloc) {
 	return out;
 }
 
-dbuf_dstr dfile_read_lines_alloc (char *path, d_allocator alloc) {
+dbuf_dstr dfile_read_lines_alloc (const char *path, d_allocator alloc) {
 	dstr s = dfile_read(path);
 	dbuf_dstr out = dstr_split_lines(s, alloc);
 	d_free(s.cptr);

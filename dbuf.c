@@ -3,15 +3,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-void __populate_dbuf_data(dbuf_data * data, dbuf * n, isize elem_size) {
-	n->elem_size = elem_size;
-	data->data_ptr = (void**)&n->data;
-	data->alloc = n->alloc;
-	data->cur = &n->cur;
-	data->len = &n->len;
-	data->elem_size = elem_size;
-}
-
 void _dbuf_make ( isize size, dbuf_data data ) {
 	_dbuf_make_alloc ( size, def_allocator, data );
 }

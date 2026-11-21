@@ -52,7 +52,6 @@
                                                                                \
     d.alloc = alloc;                                                           \
                                                                                \
-    __populate_dbuf_data(&buf, &_as_dbuf(d), sizeof(T));                       \
     __pop_dbuf_data(buf, d, T);                                                \
     _dbuf_make_alloc(init, alloc, buf);                                        \
     return d;                                                                  \

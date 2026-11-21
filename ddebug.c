@@ -14,8 +14,6 @@ static const char* dlog_colours[DLOG_NUMBER] = {
 };
 #endif
 
-void dlog_func(DLogLevel log_level, const char* file, int line, const char* fmt, ...);
-
 // string version of log levels
 const char* log_strings[DLOG_NUMBER] = {
 	#define DLOG(e, s, c) s,
@@ -66,18 +64,18 @@ void dlog_func ( DLogLevel log_level, const char* file, int line, const char* fm
 		return;
 	}
 
-	char* string[32000];
+	char* string[4096];
 	memset(string, 0, sizeof(string));
 
 	va_list va;
 	va_start(va, fmt);	
-	vsnprintf((char*)string, 32000, fmt, va);
+	vsnprintf((char*)string, 4096, fmt, va);
 	va_end(va);
 	
 	char* out_string[32000];
 	memset(out_string, 0, sizeof(out_string));
 #	ifdef DLOG_COLORS
-	sprintf((char*)out_string, "%s[%s] \x1b[90m%s:%i%s, %s\n",
+	snprintf((char*)out_string, sizeof(out_string), "%s[%s] \x1b[90m%s:%i%s, %s\n",
 			dlog_colours[log_level],
 			log_strings[log_level],
 			file,
@@ -85,7 +83,7 @@ void dlog_func ( DLogLevel log_level, const char* file, int line, const char* fm
 			RESET, 
 			(char*)string);
 #	else
-	sprintf((char*)out_string, "[%s] %s:%i, %s\n",
+	snprintf((char*)out_string, sizeof(out_string), "[%s] %s:%i, %s\n",
 			log_strings[log_level],
 			file,
 			line, 

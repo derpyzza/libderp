@@ -18,7 +18,6 @@ void* darena_allocator_realloc(void * block, isize len, d_alloc_data data) {
 }
 
 void darena_allocator_free(void* ptr, d_alloc_data data) {
-  dlog_warn("Tried freeing arena with dalloc_free or similar; use darena_free instead");
   (void)ptr;
   (void)data;
 }
